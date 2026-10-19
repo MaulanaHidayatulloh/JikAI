@@ -1,5 +1,12 @@
-import { useState } from "react";
-import { generateTimelineBranch } from "../services/simulationService";
+import { useEffect, useState } from "react";
+import {
+  getSimulationProgress,
+  saveSimulationProgress,
+} from "../services/storageService";
+import {
+  generateTimelineBranch,
+  compareScenarioWorlds,
+} from "../services/simulationService";
 
 const typeLabels = {
   established: "Fakta dasar",
@@ -106,6 +113,45 @@ export default function ScenarioResult({ scenario }) {
   const [activeBranch, setActiveBranch] = useState(null);
   const [branchLoading, setBranchLoading] = useState(false);
   const [branchError, setBranchError] = useState("");
+  const [comparison, setComparison] = useState(null);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [comparisonError, setComparisonError] = useState("");
+  const [restoredScenarioId, setRestoredScenarioId] = useState(null);
+
+  // Pulihkan progres ketika skenario dibuka.
+  useEffect(() => {
+    if (!scenario?.id) return;
+
+    const progress = getSimulationProgress(scenario.id);
+
+    setSelectedEvent(progress?.selectedEvent ?? null);
+    setActiveBranch(progress?.activeBranch ?? null);
+    setComparison(progress?.comparison ?? null);
+
+    setBranchError("");
+    setComparisonError("");
+    setBranchLoading(false);
+    setComparisonLoading(false);
+
+    setRestoredScenarioId(scenario.id);
+  }, [scenario?.id]);
+
+  // Simpan progres setiap kali pengguna membuat perubahan.
+  useEffect(() => {
+    if (!scenario?.id || restoredScenarioId !== scenario.id) return;
+
+    saveSimulationProgress(scenario.id, {
+      selectedEvent,
+      activeBranch,
+      comparison,
+    });
+  }, [
+    scenario?.id,
+    restoredScenarioId,
+    selectedEvent,
+    activeBranch,
+    comparison,
+  ]);
 
   if (!scenario) return null;
 
@@ -127,6 +173,8 @@ export default function ScenarioResult({ scenario }) {
     setBranchLoading(true);
     setBranchError("");
     setActiveBranch(null);
+    setComparison(null);
+    setComparisonError("");
     try {
       const branch = await generateTimelineBranch({
         scenario,
@@ -141,6 +189,26 @@ export default function ScenarioResult({ scenario }) {
       );
     } finally {
       setBranchLoading(false);
+    }
+  }
+
+  async function handleCompareWorlds() {
+    if (!activeBranch || comparisonLoading) return;
+    setComparisonLoading(true);
+    setComparisonError("");
+    setComparison(null);
+    try {
+      const result = await compareScenarioWorlds({
+        scenario,
+        branch: activeBranch,
+      });
+      setComparison(result);
+    } catch (error) {
+      setComparisonError(
+        error.message || "Perbandingan dunia gagal dibuat. Coba lagi.",
+      );
+    } finally {
+      setComparisonLoading(false);
     }
   }
 
@@ -256,17 +324,89 @@ export default function ScenarioResult({ scenario }) {
             <span>Keputusan: {activeBranch.choice}</span>
           </div>
           <BranchTimeline branch={activeBranch} />
-          <button
-            type="button"
-            className="branch-reset-button"
-            onClick={() => {
-              setActiveBranch(null);
-              setSelectedEvent(null);
-              setBranchError("");
-            }}
-          >
-            Jelajahi cabang lain
-          </button>
+          <div className="world-comparison-actions">
+            <button
+              type="button"
+              className="world-compare-button"
+              onClick={handleCompareWorlds}
+              disabled={comparisonLoading}
+            >
+              <span aria-hidden="true">⇄</span>
+              {comparisonLoading
+                ? "Membandingkan dunia..."
+                : comparison
+                  ? "Perbarui perbandingan"
+                  : "Bandingkan kedua dunia"}
+            </button>
+            <button
+              type="button"
+              className="branch-reset-button"
+              onClick={() => {
+                setActiveBranch(null);
+                setSelectedEvent(null);
+                setBranchError("");
+                setComparison(null);
+                setComparisonError("");
+              }}
+            >
+              Jelajahi cabang lain
+            </button>
+          </div>
+          {comparisonLoading && (
+            <div className="world-compare-loading" role="status">
+              <span className="scenario-loading-spinner" />
+              <span>JikAI sedang menganalisis perbedaan kedua dunia...</span>
+            </div>
+          )}
+          {comparisonError && (
+            <p className="branch-error" role="alert">
+              {comparisonError}
+            </p>
+          )}
+          {comparison && (
+            <section className="world-comparison" aria-live="polite">
+              <div className="world-comparison-heading">
+                <span className="section-kicker">ANALISIS PERBANDINGAN AI</span>
+                <h4>Dua dunia, dua kemungkinan</h4>
+                <p>{comparison.summary}</p>
+              </div>
+              <div className="world-comparison-table">
+                <div className="world-comparison-row world-comparison-header">
+                  <span>Aspek</span>
+                  <span>Dunia awal</span>
+                  <span>Dunia alternatif</span>
+                </div>
+                {comparison.dimensions.map((dimension, index) => (
+                  <div
+                    className="world-comparison-row"
+                    key={`${dimension.label}-${index}`}
+                  >
+                    <strong>{dimension.label}</strong>
+                    <p>{dimension.original}</p>
+                    <p>{dimension.alternative}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="world-comparison-insights">
+                <div>
+                  <span className="scenario-result-label">
+                    PERBEDAAN PALING MENENTUKAN
+                  </span>
+                  <p>{comparison.keyDifference}</p>
+                </div>
+                <div>
+                  <span className="scenario-result-label">
+                    HAL YANG BELUM PASTI
+                  </span>
+                  <p>{comparison.uncertainty}</p>
+                </div>
+              </div>
+              <p className="branch-disclaimer">
+                Perbandingan ini merupakan analisis atas simulasi hipotetis,
+                bukan prediksi pasti.
+              </p>
+            </section>
+          )}
         </div>
       )}
 

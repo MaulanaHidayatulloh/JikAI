@@ -39,3 +39,30 @@ export async function generateTimelineBranch({ scenario, event, choice }) {
 
   return result.branch;
 }
+
+export async function compareScenarioWorlds({ scenario, branch }) {
+  const result = await apiRequest("/api/generate-scenario/compare", {
+    method: "POST",
+    body: JSON.stringify({
+      original: {
+        title: scenario.title,
+        premise: scenario.premise,
+        timeline: (scenario.timeline || []).map(
+          ({ year, title, description }) => ({ year, title, description }),
+        ),
+      },
+      branch: {
+        title: branch.title,
+        summary: branch.summary,
+        choice: branch.choice,
+        timeline: (branch.timeline || []).map(
+          ({ year, title, description }) => ({ year, title, description }),
+        ),
+      },
+    }),
+  });
+  if (!result.comparison || !Array.isArray(result.comparison.dimensions)) {
+    throw new Error("Respons AI tidak berisi perbandingan dunia yang valid.");
+  }
+  return result.comparison;
+}

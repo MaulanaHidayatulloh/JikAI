@@ -1,4 +1,5 @@
 const STORAGE_KEY = "jikai_saved_scenarios_v1";
+const PROGRESS_KEY = "jikai_simulation_progress_v1";
 
 export function getSavedScenarios() {
   try {
@@ -49,5 +50,46 @@ export function deleteScenarioFromStorage(id) {
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedScenarios));
 
+  // Hapus progres simulasi yang terkait dengan skenario ini.
+  try {
+    const allProgress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}");
+
+    delete allProgress[id];
+
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(allProgress));
+  } catch (error) {
+    console.error("Gagal menghapus progres simulasi:", error);
+  }
+
   return updatedScenarios;
+}
+
+export function getSimulationProgress(scenarioId) {
+  if (!scenarioId) return null;
+
+  try {
+    const allProgress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}");
+
+    return allProgress[scenarioId] || null;
+  } catch (error) {
+    console.error("Gagal membaca progres simulasi:", error);
+    return null;
+  }
+}
+
+export function saveSimulationProgress(scenarioId, progress) {
+  if (!scenarioId) return;
+
+  try {
+    const allProgress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}");
+
+    allProgress[scenarioId] = {
+      ...progress,
+      updatedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(allProgress));
+  } catch (error) {
+    console.error("Gagal menyimpan progres simulasi:", error);
+  }
 }

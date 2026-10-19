@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { generateScenarioText } from "./ai/aiProvider.js";
-import { generateBranchWithGroq } from "./ai/groqProvider.js";
+import {
+  generateBranchWithGroq,
+  compareWorldsWithGroq,
+} from "./ai/groqProvider.js";
 import { validateGeneratedScenario } from "../validators/simulationSchemas.js";
 
 export async function createScenario(input) {
@@ -90,4 +93,41 @@ export async function createScenarioBranch(input) {
       order: index + 1,
     })),
   };
+}
+
+export async function compareWorlds(input) {
+  const rawContent = await compareWorldsWithGroq(input);
+  let generated;
+  try {
+    generated = JSON.parse(rawContent);
+  } catch {
+    const error = new Error(
+      "AI menghasilkan format perbandingan yang tidak valid. Silakan coba lagi.",
+    );
+    error.statusCode = 502;
+    throw error;
+  }
+
+  if (
+    !generated ||
+    typeof generated.summary !== "string" ||
+    !Array.isArray(generated.dimensions) ||
+    generated.dimensions.length !== 4 ||
+    !generated.dimensions.every(
+      (item) =>
+        item &&
+        typeof item.label === "string" &&
+        typeof item.original === "string" &&
+        typeof item.alternative === "string",
+    ) ||
+    typeof generated.keyDifference !== "string" ||
+    typeof generated.uncertainty !== "string"
+  ) {
+    const error = new Error(
+      "Struktur perbandingan dari AI belum sesuai. Silakan coba lagi.",
+    );
+    error.statusCode = 502;
+    throw error;
+  }
+  return generated;
 }

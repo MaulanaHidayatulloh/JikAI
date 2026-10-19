@@ -20,3 +20,7 @@ If you are developing a production application, we recommend using TypeScript wi
 Pada hasil simulasi, pilih **Bagaimana jika keputusannya berbeda?** pada salah satu peristiwa timeline. Pilih salah satu dari dua pendekatan yang tersedia untuk meminta AI menyusun tiga peristiwa lanjutan sebagai cabang alternatif. Fitur ini memakai endpoint `POST /api/generate-scenario/branch` dan konfigurasi Groq yang sama dengan generator skenario.
 
 Salin `server/.env.example` menjadi `server/.env`, lalu isi `GROQ_API_KEY` dengan API key milikmu sebelum menjalankan backend. Jangan membagikan atau mengunggah file `.env` yang berisi API key.
+
+## Fitur perbandingan dunia (Tahap E)
+
+Setelah membuat cabang alternatif dari timeline, pengguna dapat memilih **Bandingkan kedua dunia**. JikAI akan membandingkan dunia awal dengan cabang pilihan melalui empat dimensi, ringkasan perbedaan utama, dan catatan ketidakpastian. Fitur ini menggunakan endpoint `POST /api/generate-scenario/compare` dan provider Groq yang sama dengan fitur simulasi lainnya.

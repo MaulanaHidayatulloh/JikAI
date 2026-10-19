@@ -81,11 +81,13 @@ export default function App() {
       const updated = saveScenarioToStorage(generatedScenario);
       setSavedScenarios(updated);
       setErrorMessage("");
+      return true;
     } catch (error) {
       console.error("Gagal menyimpan simulasi:", error);
       setErrorMessage(
         "Simulasi gagal disimpan. Periksa ruang penyimpanan browser.",
       );
+      return false;
     }
   }
 
@@ -139,6 +141,9 @@ export default function App() {
               onReset={handleReset}
               generatedScenario={generatedScenario}
               onSaveCurrent={handleSaveCurrentScenario}
+              isScenarioSaved={savedScenarios.some(
+                (scenario) => scenario.id === generatedScenario?.id,
+              )}
             />
           }
         />

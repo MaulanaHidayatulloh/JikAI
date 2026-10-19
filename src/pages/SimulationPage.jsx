@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import ModeCard, { modes } from "../components/ModeCard";
 import ScenarioForm from "../components/ScenarioForm";
 import ScenarioSummary from "../components/ScenarioSummary";
@@ -16,7 +17,47 @@ export default function SimulationPage({
   onReset,
   generatedScenario,
   onSaveCurrent,
+  isScenarioSaved = false,
 }) {
+  const [saveFeedback, setSaveFeedback] = useState({
+    scenarioId: null,
+    animated: false,
+    notice: "",
+  });
+  const saveAnimation =
+    saveFeedback.scenarioId === generatedScenario?.id && saveFeedback.animated;
+  const saveNotice =
+    saveFeedback.scenarioId === generatedScenario?.id
+      ? saveFeedback.notice
+      : "";
+
+  useEffect(() => {
+    if (!saveNotice) return undefined;
+
+    const scenarioId = generatedScenario?.id;
+    const timeoutId = window.setTimeout(() => {
+      setSaveFeedback((current) =>
+        current.scenarioId === scenarioId
+          ? { ...current, notice: "" }
+          : current,
+      );
+    }, 2800);
+    return () => window.clearTimeout(timeoutId);
+  }, [saveNotice, generatedScenario?.id]);
+
+  function handleSaveClick() {
+    const saved = onSaveCurrent?.();
+    if (!saved) return;
+
+    setSaveFeedback({
+      scenarioId: generatedScenario?.id,
+      animated: true,
+      notice: isScenarioSaved
+        ? "Skenario ini sudah tersimpan di arsip."
+        : "Skenario berhasil disimpan ke arsip!",
+    });
+  }
+
   return (
     <main className="simulation-page">
       <section className="modes-section" id="mode">
@@ -84,12 +125,64 @@ export default function SimulationPage({
           <div className="scenario-result-actions">
             <button
               type="button"
-              className="button-primary"
-              onClick={onSaveCurrent}
+              className={`button-primary archive-save-button${saveAnimation ? " is-saved" : ""}`}
+              onClick={handleSaveClick}
+              aria-label={
+                isScenarioSaved || saveAnimation
+                  ? "Skenario tersimpan di arsip"
+                  : "Simpan skenario ke arsip"
+              }
             >
-              Simpan ke Arsip
+              <span className="archive-save-icon" aria-hidden="true">
+                {isScenarioSaved || saveAnimation ? (
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="m4.5 10.2 3.5 3.4 7.5-7.3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M5 3.5h10a1 1 0 0 1 1 1v12l-6-3.5-6 3.5v-12a1 1 0 0 1 1-1Z"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </span>
+              <span>
+                {isScenarioSaved || saveAnimation
+                  ? "Tersimpan di Arsip"
+                  : "Simpan ke Arsip"}
+              </span>
+              {saveAnimation && (
+                <span className="archive-save-sparkle" aria-hidden="true">
+                  ✦
+                </span>
+              )}
             </button>
           </div>
+          {saveNotice && (
+            <div className="archive-save-toast" role="status" key={saveNotice}>
+              <span className="archive-save-toast-icon" aria-hidden="true">
+                <svg viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="m4.5 10.2 3.5 3.4 7.5-7.3"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span>{saveNotice}</span>
+            </div>
+          )}
 
           <ScenarioResult scenario={generatedScenario} />
         </div>

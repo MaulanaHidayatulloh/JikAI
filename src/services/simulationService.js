@@ -66,3 +66,20 @@ export async function compareScenarioWorlds({ scenario, branch }) {
   }
   return result.comparison;
 }
+
+export async function generateScenarioImage(scenario) {
+  const result = await apiRequest("/api/generate-scenario/image", {
+    method: "POST",
+    body: JSON.stringify({
+      title: scenario.title,
+      premise: scenario.premise,
+      pointOfDivergence: scenario.pointOfDivergence,
+    }),
+  });
+
+  if (!result.imageDataUrl) {
+    throw new Error("Respons backend tidak berisi gambar.");
+  }
+
+  return result.imageDataUrl;
+}

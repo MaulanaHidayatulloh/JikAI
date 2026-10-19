@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import {
   getSimulationProgress,
   saveSimulationProgress,
+  getCachedImage,
+  saveCachedImage,
 } from "../services/storageService";
 import {
   generateTimelineBranch,
   compareScenarioWorlds,
+  generateScenarioImage,
 } from "../services/simulationService";
 
 const typeLabels = {
@@ -117,6 +120,9 @@ export default function ScenarioResult({ scenario }) {
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [comparisonError, setComparisonError] = useState("");
   const [restoredScenarioId, setRestoredScenarioId] = useState(null);
+  const [scenarioImage, setScenarioImage] = useState("");
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState("");
 
   // Pulihkan progres ketika skenario dibuka.
   useEffect(() => {
@@ -151,6 +157,62 @@ export default function ScenarioResult({ scenario }) {
     selectedEvent,
     activeBranch,
     comparison,
+  ]);
+
+  // Membuat gambar untuk skenario.
+  useEffect(() => {
+    if (!scenario?.id) return;
+
+    let cancelled = false;
+    const cacheKey = `scenario:${scenario.id}`;
+
+    async function loadScenarioImage() {
+      setImageError("");
+      setImageLoading(true);
+
+      try {
+        // Gunakan gambar tersimpan jika tersedia.
+        const cachedImage = await getCachedImage(cacheKey);
+
+        if (cancelled) return;
+
+        if (cachedImage) {
+          setScenarioImage(cachedImage);
+          return;
+        }
+
+        // Buat gambar hanya jika belum ada di cache.
+        const image = await generateScenarioImage(scenario);
+
+        if (cancelled) return;
+
+        await saveCachedImage(cacheKey, image);
+
+        if (!cancelled) {
+          setScenarioImage(image);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setImageError(error.message || "Gambar gagal dimuat.");
+        }
+      } finally {
+        if (!cancelled) {
+          setImageLoading(false);
+        }
+      }
+    }
+
+    setScenarioImage("");
+    loadScenarioImage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    scenario?.id,
+    scenario?.title,
+    scenario?.premise,
+    scenario?.pointOfDivergence,
   ]);
 
   if (!scenario) return null;
@@ -221,6 +283,31 @@ export default function ScenarioResult({ scenario }) {
 
       <h2 className="scenario-result-title">{scenario.title}</h2>
       <p className="scenario-result-premise">{scenario.premise}</p>
+
+      <div className="scenario-visual">
+        {imageLoading && (
+          <div className="scenario-visual-placeholder" role="status">
+            <span className="scenario-loading-spinner" />
+            <p>JikAI sedang menggambarkan dunia alternatifmu...</p>
+          </div>
+        )}
+
+        {scenarioImage && (
+          <figure className="scenario-visual-figure">
+            <img
+              src={scenarioImage}
+              alt={`Visualisasi dunia alternatif: ${scenario.title}`}
+            />
+            <figcaption>Visualisasi AI · Dunia alternatif JikAI</figcaption>
+          </figure>
+        )}
+
+        {imageError && (
+          <p className="scenario-visual-error" role="status">
+            {imageError}
+          </p>
+        )}
+      </div>
 
       <div className="scenario-result-block">
         <span className="scenario-result-label">TITIK PERUBAHAN</span>

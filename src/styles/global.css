@@ -1962,6 +1962,51 @@ p {
   margin-top: 16px;
 }
 
+.scenario-visual {
+  margin: 24px 0;
+}
+
+.scenario-visual-placeholder {
+  min-height: 220px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #f8f6ff;
+  color: var(--muted);
+  text-align: center;
+}
+
+.scenario-visual-figure {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.scenario-visual-figure img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.scenario-visual-figure figcaption {
+  padding: 11px 14px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.scenario-visual-error {
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* Responsif */
 @media (max-width: 1100px) {
   .hero {

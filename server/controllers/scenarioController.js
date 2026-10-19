@@ -4,6 +4,7 @@ import {
   createScenarioBranch,
   compareWorlds,
 } from "../services/scenarioService.js";
+import { generateScenarioImage as createImage } from "../services/ai/imageProvider.js";
 
 export async function generateScenario(req, res, next) {
   try {
@@ -100,6 +101,37 @@ export async function compareScenarioWorlds(req, res, next) {
       },
     });
     res.json({ success: true, comparison });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function generateScenarioVisual(req, res, next) {
+  try {
+    const { title, premise, pointOfDivergence } = req.body || {};
+
+    if (
+      typeof title !== "string" ||
+      typeof premise !== "string" ||
+      !title.trim() ||
+      !premise.trim()
+    ) {
+      const error = new Error("Data skenario untuk gambar tidak valid.");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const prompt = [
+      "Create a cinematic, highly detailed alternate-world concept art.",
+      `Scenario: ${title.slice(0, 180)}.`,
+      `World description: ${premise.slice(0, 700)}.`,
+      `Point of divergence: ${String(pointOfDivergence || "").slice(0, 300)}.`,
+      "Wide composition, immersive environment, realistic lighting, no text, no letters, no watermark.",
+    ].join(" ");
+
+    const imageDataUrl = await createImage(prompt);
+
+    res.json({ success: true, imageDataUrl });
   } catch (error) {
     next(error);
   }

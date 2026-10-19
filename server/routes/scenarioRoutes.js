@@ -3,6 +3,7 @@ import {
   generateScenario,
   generateScenarioBranch,
   compareScenarioWorlds,
+  generateScenarioVisual,
 } from "../controllers/scenarioController.js";
 
 const router = Router();
@@ -10,5 +11,6 @@ const router = Router();
 router.post("/", generateScenario);
 router.post("/branch", generateScenarioBranch);
 router.post("/compare", compareScenarioWorlds);
+router.post("/image", generateScenarioVisual);
 
 export default router;

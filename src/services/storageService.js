@@ -1,5 +1,7 @@
 const STORAGE_KEY = "jikai_saved_scenarios_v1";
 const PROGRESS_KEY = "jikai_simulation_progress_v1";
+const IMAGE_DB_NAME = "jikai_image_cache";
+const IMAGE_STORE_NAME = "images";
 
 export function getSavedScenarios() {
   try {
@@ -92,4 +94,54 @@ export function saveSimulationProgress(scenarioId, progress) {
   } catch (error) {
     console.error("Gagal menyimpan progres simulasi:", error);
   }
+}
+
+function openImageDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(IMAGE_DB_NAME, 1);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+
+      if (!db.objectStoreNames.contains(IMAGE_STORE_NAME)) {
+        db.createObjectStore(IMAGE_STORE_NAME);
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function getCachedImage(key) {
+  const db = await openImageDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(IMAGE_STORE_NAME, "readonly");
+    const request = transaction.objectStore(IMAGE_STORE_NAME).get(key);
+
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+export async function saveCachedImage(key, imageDataUrl) {
+  const db = await openImageDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(IMAGE_STORE_NAME, "readwrite");
+
+    transaction.objectStore(IMAGE_STORE_NAME).put(imageDataUrl, key);
+
+    transaction.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+  });
 }

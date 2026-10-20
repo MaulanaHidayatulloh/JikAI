@@ -84,7 +84,14 @@ export async function generateWithGroq({
       {
         role: "system",
         content: `
-Kamu adalah mesin simulasi JikAI berbahasa Indonesia.
+Kamu adalah mesin simulasi JikAI yang WAJIB menghasilkan seluruh teks untuk pengguna dalam Bahasa Indonesia.
+
+ATURAN BAHASA WAJIB:
+- Semua nilai teks dalam JSON wajib berbahasa Indonesia yang alami dan mudah dipahami, termasuk title, premise, pointOfDivergence, assumptions, title dan description pada setiap peristiwa timeline, serta disclaimer.
+- Aturan ini tetap berlaku meskipun ide pengguna, nama mode, atau sebagian besar konteks ditulis dalam Bahasa Inggris. Jangan mengikuti bahasa input; selalu jawab dalam Bahasa Indonesia.
+- Jangan menyisipkan kalimat atau paragraf berbahasa Inggris. Nama orang, nama tempat, nama organisasi, judul resmi, dan istilah yang memang lazim dipertahankan dalam bahasa aslinya boleh tetap asli.
+- Nama properti JSON dan nilai enum yang diwajibkan aplikasi (misalnya established, plausible, speculative) harus tetap persis seperti skema dan tidak diterjemahkan.
+- Sebelum mengirim, periksa kembali seluruh nilai teks dan ubah bagian yang masih berbahasa Inggris ke Bahasa Indonesia.
 
 Buat skenario hipotetis yang kreatif, koheren, dan sesuai mode.
 Jangan menyatakan hasil simulasi sebagai kepastian atau prediksi faktual.
@@ -121,6 +128,8 @@ Ide skenario: ${prompt}
 Tahun awal: ${startYear}
 Jumlah peristiwa: ${timelineLength}
 Tingkat detail: ${detailLevel}
+
+PENTING: Semua isi teks yang dihasilkan wajib berbahasa Indonesia, apa pun bahasa ide pengguna.
 
 Panduan detail:
 - concise: deskripsi singkat.
@@ -162,7 +171,13 @@ export async function generateBranchWithGroq({ scenario, event, choice }) {
       {
         role: "system",
         content: `
-Kamu adalah mesin simulasi cabang JikAI yang menulis dalam Bahasa Indonesia.
+Kamu adalah mesin simulasi cabang JikAI yang WAJIB menulis seluruh teks untuk pengguna dalam Bahasa Indonesia.
+ATURAN BAHASA WAJIB:
+- Semua nilai teks JSON, termasuk title, summary, title dan description setiap peristiwa, harus menggunakan Bahasa Indonesia yang alami.
+- Tetap gunakan Bahasa Indonesia meskipun pilihan pengguna atau skenario sumber berbahasa Inggris.
+- Jangan menyisipkan kalimat berbahasa Inggris. Nama diri dan istilah resmi boleh dipertahankan jika diperlukan.
+- Pertahankan nama properti JSON serta nilai enum established, plausible, speculative persis seperti skema aplikasi.
+- Periksa seluruh nilai teks sebelum menjawab dan terjemahkan bagian yang masih berbahasa Inggris.
 Buat kelanjutan dunia alternatif berdasarkan keputusan pengguna pada satu peristiwa.
 Jaga kesinambungan sebab-akibat, tahun, konteks, dan nada skenario.
 Hasil bersifat hipotetis, bukan prediksi atau kepastian faktual.
@@ -190,7 +205,7 @@ Peristiwa pemicu pada tahun ${event.year}: ${event.title}
 Detail peristiwa: ${event.description}
 Keputusan pengguna: ${choice}
 
-Tampilkan konsekuensi jangka pendek, menengah, dan lanjutan yang masuk akal dalam dunia hipotetis ini.
+Tampilkan konsekuensi jangka pendek, menengah, dan lanjutan yang masuk akal dalam dunia hipotetis ini. Seluruh nilai teks pada hasil JSON wajib menggunakan Bahasa Indonesia, meskipun konteks sumber berbahasa Inggris.
         `.trim(),
       },
     ],
@@ -224,7 +239,13 @@ export async function compareWorldsWithGroq({ original, branch }) {
       {
         role: "system",
         content: `
-Kamu adalah analis perbandingan dunia alternatif JikAI dan selalu menulis dalam Bahasa Indonesia.
+Kamu adalah analis perbandingan dunia alternatif JikAI. Kamu WAJIB menghasilkan seluruh teks untuk pengguna dalam Bahasa Indonesia.
+ATURAN BAHASA WAJIB:
+- Semua nilai teks JSON, termasuk summary, label, original, alternative, keyDifference, dan uncertainty, wajib berbahasa Indonesia yang alami.
+- Tetap gunakan Bahasa Indonesia meskipun data dunia awal atau dunia alternatif berisi teks berbahasa Inggris.
+- Jangan menyisipkan kalimat berbahasa Inggris. Nama diri dan istilah resmi boleh dipertahankan jika diperlukan.
+- Pertahankan nama properti JSON sesuai skema aplikasi.
+- Periksa seluruh nilai teks sebelum menjawab dan ubah bagian yang masih berbahasa Inggris ke Bahasa Indonesia.
 Bandingkan dunia awal dan cabang alternatif berdasarkan data yang diberikan.
 Jangan mengarang detail yang tidak didukung; simpulkan secara hati-hati dari premis dan timeline.
 Hasil hipotetis, bukan prediksi atau kepastian faktual.

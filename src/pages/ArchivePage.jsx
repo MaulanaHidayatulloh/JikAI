@@ -12,9 +12,19 @@ export default function ArchivePage({ savedScenarios, onDelete, onOpen }) {
   return (
     <main className="archive-page">
       <div className="archive-page-heading">
-        <span className="section-kicker">KOLEKSI PRIBADI</span>
-        <h1>Arsip Simulasi</h1>
-        <p>Semua dunia yang pernah kamu ciptakan, tersimpan di satu tempat.</p>
+        <span className="section-kicker">ARSIP PRIBADI</span>
+
+        <div className="archive-heading-row">
+          <h1>Arsip Simulasi</h1>
+          <span className="library-count">
+            {savedScenarios.length} simulasi
+          </span>
+        </div>
+
+        <p>
+          Semua dunia yang pernah kamu ciptakan, tersimpan di satu tempat.
+          Simpan dan jelajahi kembali kemungkinan yang pernah kamu ciptakan.
+        </p>
       </div>
 
       <ScenarioLibrary

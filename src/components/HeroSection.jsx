@@ -2,11 +2,6 @@ export default function HeroSection({ onExplore }) {
   return (
     <section className="hero" id="beranda">
       <div className="hero-copy">
-        <div className="eyebrow">
-          <span className="status-dot" />
-          RUANG UNTUK BERBAGAI KEMUNGKINAN
-        </div>
-
         <h1>
           Satu pertanyaan.
           <br />
@@ -25,7 +20,7 @@ export default function HeroSection({ onExplore }) {
           </a>
 
           <a className="button-secondary" href="#contoh">
-            Lihat Contoh Dunia
+            Lihat Contoh
           </a>
         </div>
 

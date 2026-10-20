@@ -3,10 +3,16 @@ import { modes } from "./ModeCard";
 function formatDate(date) {
   if (!date) return "Tanggal tidak tersedia";
 
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "Tanggal tidak tersedia";
+  }
+
   return new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(date));
+  }).format(parsedDate);
 }
 
 export default function ScenarioLibrary({
@@ -22,18 +28,6 @@ export default function ScenarioLibrary({
 
   return (
     <section className="scenario-library" id="arsip-simulasi">
-      <div className="library-heading">
-        <div>
-          <span className="section-kicker">ARSIP PRIBADI</span>
-          <h2>Semesta yang Kamu Simpan</h2>
-          <p>
-            Simpan dan jelajahi kembali kemungkinan yang pernah kamu ciptakan.
-          </p>
-        </div>
-
-        <span className="library-count">{scenarios.length} simulasi</span>
-      </div>
-
       {currentScenario && (
         <div className="library-save-panel">
           <div>

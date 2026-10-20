@@ -104,11 +104,6 @@ export default function ScenarioForm({
         {isGenerating ? "Sedang Menyusun..." : "Buat Skenario dengan AI"}
         {!isGenerating && <span aria-hidden="true"> →</span>}
       </button>
-
-      <p className="scenario-disclaimer">
-        Untuk saat ini, formulir akan menyiapkan ringkasan konfigurasi.
-        Generator AI akan ditambahkan pada tahap berikutnya.
-      </p>
     </form>
   );
 }

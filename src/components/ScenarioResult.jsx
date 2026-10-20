@@ -17,25 +17,6 @@ const typeLabels = {
   speculative: "Spekulatif",
 };
 
-const choiceSets = {
-  alternate_history: [
-    "Pertahankan jalur sejarah utama dan utamakan stabilitas",
-    "Dorong perubahan besar meski risikonya meningkat",
-  ],
-  future_simulator: [
-    "Utamakan keamanan, pemerataan, dan stabilitas",
-    "Percepat inovasi dengan mengambil risiko lebih besar",
-  ],
-  decision_simulator: [
-    "Pilih langkah bertahap dengan risiko terkendali",
-    "Ambil keputusan berani untuk mengejar hasil maksimal",
-  ],
-  fictional_worlds: [
-    "Bangun aliansi dan selesaikan konflik lewat kerja sama",
-    "Tempuh jalur mandiri dan hadapi tantangan secara langsung",
-  ],
-};
-
 function eventIdentity(event) {
   return (
     event?.id ?? `${event?.year ?? "tahun"}-${event?.title ?? "peristiwa"}`
@@ -113,6 +94,7 @@ function BranchTimeline({ branch }) {
 
 export default function ScenarioResult({ scenario }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [customChoice, setCustomChoice] = useState("");
   const [activeBranch, setActiveBranch] = useState(null);
   const [branchLoading, setBranchLoading] = useState(false);
   const [branchError, setBranchError] = useState("");
@@ -350,12 +332,12 @@ export default function ScenarioResult({ scenario }) {
     ? scenario.assumptions
     : [];
   const timeline = Array.isArray(scenario.timeline) ? scenario.timeline : [];
-  const choices = choiceSets[scenario.category] || choiceSets.alternate_history;
 
   function toggleEvent(event) {
     setSelectedEvent((current) =>
       current && eventIdentity(current) === eventIdentity(event) ? null : event,
     );
+    setCustomChoice("");
     setBranchError("");
   }
 
@@ -427,7 +409,7 @@ export default function ScenarioResult({ scenario }) {
               src={scenarioImage}
               alt={`Visualisasi dunia alternatif: ${scenario.title}`}
             />
-            <figcaption>Visualisasi AI · Dunia alternatif JikAI</figcaption>
+            <figcaption>*Gambar dibuat otomatis oleh JikAI</figcaption>
           </figure>
         )}
 
@@ -485,31 +467,51 @@ export default function ScenarioResult({ scenario }) {
               eventIdentity(selectedEvent) === eventIdentity(event) && (
                 <div className="branch-choice-panel">
                   <span className="scenario-result-label">
-                    PILIH ARAH DUNIA
+                    TENTUKAN KEPUTUSANMU
                   </span>
-                  <p>Bagaimana jika keputusan pada peristiwa ini berbeda?</p>
-                  <div className="branch-choice-list">
-                    {choices.map((choice, choiceIndex) => (
-                      <button
-                        type="button"
-                        className="branch-choice-button"
-                        key={choice}
-                        onClick={() => chooseBranch(choice)}
-                        disabled={branchLoading}
-                      >
-                        <span className="branch-choice-number">
-                          {choiceIndex + 1}
-                        </span>
-                        <span>{choice}</span>
-                        <span
-                          className="branch-choice-arrow"
-                          aria-hidden="true"
-                        >
-                          ↗
-                        </span>
-                      </button>
-                    ))}
+                  <p>
+                    Tulis keputusan alternatifmu sendiri. JikAI akan
+                    menyimulasikan bagaimana dunia berkembang jika keputusan itu
+                    diambil.
+                  </p>
+                  <label
+                    className="branch-custom-choice-label"
+                    htmlFor={`branch-choice-${eventIdentity(selectedEvent)}`}
+                  >
+                    Keputusan alternatif
+                  </label>
+                  <textarea
+                    id={`branch-choice-${eventIdentity(selectedEvent)}`}
+                    className="branch-custom-choice-input"
+                    value={customChoice}
+                    onChange={(event) => setCustomChoice(event.target.value)}
+                    placeholder="Contoh: Pemerintah memilih bekerja sama dengan negara tetangga untuk mengembangkan teknologi energi bersih..."
+                    maxLength={240}
+                    rows={3}
+                    disabled={branchLoading}
+                  />
+                  <div className="branch-custom-choice-footer">
+                    <span className="branch-custom-choice-hint">
+                      Jelaskan tindakan atau keputusan yang ingin kamu ambil.
+                    </span>
+                    <span
+                      className={
+                        customChoice.length >= 220 ? "is-near-limit" : ""
+                      }
+                    >
+                      {customChoice.length}/240
+                    </span>
                   </div>
+                  <button
+                    type="button"
+                    className="button-primary branch-custom-choice-submit"
+                    onClick={() => chooseBranch(customChoice.trim())}
+                    disabled={branchLoading || !customChoice.trim()}
+                  >
+                    {branchLoading
+                      ? "Menyimulasikan..."
+                      : "Simulasikan keputusan ↗"}
+                  </button>
                   {branchLoading && (
                     <div className="branch-loading" role="status">
                       <span className="scenario-loading-spinner" />
@@ -554,7 +556,7 @@ export default function ScenarioResult({ scenario }) {
                   src={branchImage}
                   alt={`Visualisasi dunia alternatif: ${activeBranch.title}`}
                 />
-                <figcaption>Dunia alternatif · Visualisasi AI</figcaption>
+                <figcaption>*Gambar dibuat otomatis oleh JikAI</figcaption>
               </figure>
             )}
 

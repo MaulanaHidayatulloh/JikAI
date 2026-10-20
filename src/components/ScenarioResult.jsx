@@ -152,7 +152,7 @@ export default function ScenarioResult({ scenario }) {
     if (!scenario?.id) return;
 
     let cancelled = false;
-    const cacheKey = `scenario:${scenario.id}`;
+    const cacheKey = `scenario:v3:${scenario.id}`;
 
     async function loadScenarioImage() {
       setImageError("");
@@ -201,6 +201,8 @@ export default function ScenarioResult({ scenario }) {
     scenario?.title,
     scenario?.premise,
     scenario?.pointOfDivergence,
+    scenario?.prompt,
+    scenario?.visualFocus,
   ]);
 
   // cache gambar timeline
@@ -213,7 +215,7 @@ export default function ScenarioResult({ scenario }) {
     }
 
     let cancelled = false;
-    const cacheKey = `timeline:${scenario.id}:${eventIdentity(selectedEvent)}`;
+    const cacheKey = `timeline:v3:${scenario.id}:${eventIdentity(selectedEvent)}`;
 
     async function loadTimelineImage() {
       setTimelineImage("");
@@ -233,9 +235,13 @@ export default function ScenarioResult({ scenario }) {
         const image = await generateScenarioImage({
           title: `${scenario.title}: ${selectedEvent.title}`,
           premise: selectedEvent.description,
+          userPrompt: scenario.prompt,
+          category: scenario.category,
+          visualFocus: `${selectedEvent.title}. ${selectedEvent.description}`,
           pointOfDivergence:
             `Tahun ${selectedEvent.year}. ` +
-            "Visualisasi peristiwa penting dalam dunia alternatif.",
+            `Peristiwa dalam skenario: ${scenario.prompt || scenario.title}.`,
+          timelineContext: `Tahun ${selectedEvent.year}: ${selectedEvent.title}. ${selectedEvent.description}`,
         });
 
         if (cancelled) return;
@@ -273,7 +279,7 @@ export default function ScenarioResult({ scenario }) {
     let cancelled = false;
 
     const cacheKey = [
-      "branch",
+      "branch:v3",
       scenario.id,
       eventIdentity(activeBranch.originEvent),
       activeBranch.choice,
@@ -298,9 +304,19 @@ export default function ScenarioResult({ scenario }) {
         const image = await generateScenarioImage({
           title: activeBranch.title,
           premise: activeBranch.summary,
+          userPrompt: scenario.prompt,
+          category: scenario.category,
+          visualFocus: `${activeBranch.title}. ${activeBranch.summary}`,
           pointOfDivergence:
-            `Cabang dari skenario "${scenario.title}". ` +
+            `Cabang dari ide pengguna: "${scenario.prompt || scenario.title}". ` +
             `Pilihan: ${activeBranch.choice}.`,
+          timelineContext: (activeBranch.timeline || [])
+            .slice(0, 3)
+            .map(
+              (event) => `${event.year}: ${event.title} — ${event.description}`,
+            )
+            .join("; "),
+          choice: activeBranch.choice,
         });
 
         if (cancelled) return;

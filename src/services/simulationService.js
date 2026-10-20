@@ -74,6 +74,11 @@ export async function generateScenarioImage(scenario) {
       title: scenario.title,
       premise: scenario.premise,
       pointOfDivergence: scenario.pointOfDivergence,
+      userPrompt: scenario.prompt,
+      category: scenario.category,
+      visualFocus: scenario.visualFocus,
+      timelineContext: scenario.timelineContext,
+      choice: scenario.choice,
     }),
   });
 

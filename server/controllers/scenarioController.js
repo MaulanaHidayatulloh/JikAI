@@ -121,13 +121,37 @@ export async function generateScenarioVisual(req, res, next) {
       throw error;
     }
 
+    const scenarioTitle = title.trim().slice(0, 180);
+    const scenarioPremise = premise.trim().slice(0, 700);
+    const divergence = String(pointOfDivergence || "")
+      .trim()
+      .slice(0, 300);
+
     const prompt = [
-      "Create a cinematic, highly detailed alternate-world concept art.",
-      `Scenario: ${title.slice(0, 180)}.`,
-      `World description: ${premise.slice(0, 700)}.`,
-      `Point of divergence: ${String(pointOfDivergence || "").slice(0, 300)}.`,
-      "Wide composition, immersive environment, realistic lighting, no text, no letters, no watermark.",
-    ].join(" ");
+      "Photorealistic live-action cinematic film still,",
+      "depicting a believable alternate-history world as if",
+      "captured by a professional cinema camera on a real film set.",
+      `Scenario: ${scenarioTitle}.`,
+      `World description: ${scenarioPremise}.`,
+      divergence ? `Historical point of divergence: ${divergence}.` : "",
+      "Show a specific, believable scene that communicates",
+      "the consequences of this alternate reality.",
+      "Real-world architecture, authentic environmental details,",
+      "natural human anatomy, realistic skin and clothing textures,",
+      "physically plausible lighting, natural shadows,",
+      "cinematic depth, atmospheric perspective,",
+      "carefully composed wide-angle establishing shot,",
+      "subtle film grain, realistic materials,",
+      "natural cinematic color grading, high photographic detail.",
+      "The result must look like a frame from a live-action",
+      "historical drama or science-fiction film, not an illustration.",
+      "No cartoon, no anime, no painting, no concept art,",
+      "no comic-book style, no plastic-looking surfaces,",
+      "no exaggerated proportions, no artificial 3D animation look,",
+      "no text, no lettering, no captions, no watermark.",
+    ]
+      .filter(Boolean)
+      .join(" ");
 
     const imageDataUrl = await createImage(prompt);
 

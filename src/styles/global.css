@@ -1070,7 +1070,7 @@ p {
 }
 
 .timeline-event:not(:last-child) {
-  padding-bottom: 28px;
+  padding-bottom: 10px;
 }
 
 .timeline-event:not(:last-child)::before {

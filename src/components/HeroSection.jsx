@@ -20,9 +20,9 @@ export default function HeroSection({ onExplore }) {
         </p>
 
         <div className="hero-actions">
-          <button className="button-primary" onClick={onExplore}>
-            Mulai Menjelajah <span aria-hidden="true">→</span>
-          </button>
+          <a href="#home-intro" className="button-primary">
+            Mulai Sekarang <span aria-hidden="true">→</span>
+          </a>
 
           <a className="button-secondary" href="#contoh">
             Lihat Contoh Dunia
@@ -61,7 +61,6 @@ export default function HeroSection({ onExplore }) {
         </div>
 
         <div className="art-caption">
-          <span>01 — 04</span>
           <span>Jelajahi jalur yang berbeda</span>
         </div>
       </div>

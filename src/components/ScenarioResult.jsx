@@ -123,6 +123,12 @@ export default function ScenarioResult({ scenario }) {
   const [scenarioImage, setScenarioImage] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState("");
+  const [timelineImage, setTimelineImage] = useState("");
+  const [timelineImageLoading, setTimelineImageLoading] = useState(false);
+  const [timelineImageError, setTimelineImageError] = useState("");
+  const [branchImage, setBranchImage] = useState("");
+  const [branchImageLoading, setBranchImageLoading] = useState(false);
+  const [branchImageError, setBranchImageError] = useState("");
 
   // Pulihkan progres ketika skenario dibuka.
   useEffect(() => {
@@ -214,6 +220,129 @@ export default function ScenarioResult({ scenario }) {
     scenario?.premise,
     scenario?.pointOfDivergence,
   ]);
+
+  // cache gambar timeline
+  useEffect(() => {
+    if (!scenario?.id || restoredScenarioId !== scenario.id || !selectedEvent) {
+      setTimelineImage("");
+      setTimelineImageError("");
+      setTimelineImageLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const cacheKey = `timeline:${scenario.id}:${eventIdentity(selectedEvent)}`;
+
+    async function loadTimelineImage() {
+      setTimelineImage("");
+      setTimelineImageError("");
+      setTimelineImageLoading(true);
+
+      try {
+        const cached = await getCachedImage(cacheKey);
+
+        if (cancelled) return;
+
+        if (cached) {
+          setTimelineImage(cached);
+          return;
+        }
+
+        const image = await generateScenarioImage({
+          title: `${scenario.title}: ${selectedEvent.title}`,
+          premise: selectedEvent.description,
+          pointOfDivergence:
+            `Tahun ${selectedEvent.year}. ` +
+            "Visualisasi peristiwa penting dalam dunia alternatif.",
+        });
+
+        if (cancelled) return;
+
+        await saveCachedImage(cacheKey, image);
+
+        if (!cancelled) setTimelineImage(image);
+      } catch (error) {
+        if (!cancelled) {
+          setTimelineImageError(
+            error.message || "Visualisasi peristiwa gagal dibuat.",
+          );
+        }
+      } finally {
+        if (!cancelled) setTimelineImageLoading(false);
+      }
+    }
+
+    loadTimelineImage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scenario?.id, scenario?.title, restoredScenarioId, selectedEvent]);
+
+  // cache gambar cabang alternatif
+  useEffect(() => {
+    if (!scenario?.id || restoredScenarioId !== scenario.id || !activeBranch) {
+      setBranchImage("");
+      setBranchImageError("");
+      setBranchImageLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const cacheKey = [
+      "branch",
+      scenario.id,
+      eventIdentity(activeBranch.originEvent),
+      activeBranch.choice,
+      activeBranch.title,
+    ].join(":");
+
+    async function loadBranchImage() {
+      setBranchImage("");
+      setBranchImageError("");
+      setBranchImageLoading(true);
+
+      try {
+        const cached = await getCachedImage(cacheKey);
+
+        if (cancelled) return;
+
+        if (cached) {
+          setBranchImage(cached);
+          return;
+        }
+
+        const image = await generateScenarioImage({
+          title: activeBranch.title,
+          premise: activeBranch.summary,
+          pointOfDivergence:
+            `Cabang dari skenario "${scenario.title}". ` +
+            `Pilihan: ${activeBranch.choice}.`,
+        });
+
+        if (cancelled) return;
+
+        await saveCachedImage(cacheKey, image);
+
+        if (!cancelled) setBranchImage(image);
+      } catch (error) {
+        if (!cancelled) {
+          setBranchImageError(
+            error.message || "Visualisasi cabang alternatif gagal dibuat.",
+          );
+        }
+      } finally {
+        if (!cancelled) setBranchImageLoading(false);
+      }
+    }
+
+    loadBranchImage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scenario?.id, scenario?.title, restoredScenarioId, activeBranch]);
 
   if (!scenario) return null;
 
@@ -410,7 +539,34 @@ export default function ScenarioResult({ scenario }) {
             </strong>
             <span>Keputusan: {activeBranch.choice}</span>
           </div>
+
+          <div className="scenario-visual">
+            {branchImageLoading && (
+              <div className="scenario-visual-placeholder" role="status">
+                <span className="scenario-loading-spinner" />
+                <p>JikAI sedang menggambarkan dunia hasil pilihanmu...</p>
+              </div>
+            )}
+
+            {branchImage && (
+              <figure className="scenario-visual-figure">
+                <img
+                  src={branchImage}
+                  alt={`Visualisasi dunia alternatif: ${activeBranch.title}`}
+                />
+                <figcaption>Dunia alternatif · Visualisasi AI</figcaption>
+              </figure>
+            )}
+
+            {branchImageError && (
+              <p className="scenario-visual-error" role="status">
+                {branchImageError}
+              </p>
+            )}
+          </div>
+
           <BranchTimeline branch={activeBranch} />
+
           <div className="world-comparison-actions">
             <button
               type="button"

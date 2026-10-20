@@ -160,11 +160,6 @@ export default function SimulationPage({
                   ? "Tersimpan di Arsip"
                   : "Simpan ke Arsip"}
               </span>
-              {saveAnimation && (
-                <span className="archive-save-sparkle" aria-hidden="true">
-                  ✦
-                </span>
-              )}
             </button>
           </div>
           {saveNotice && (

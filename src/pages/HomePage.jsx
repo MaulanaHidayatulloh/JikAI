@@ -19,7 +19,7 @@ export default function HomePage({ onChooseExample }) {
     <>
       <HeroSection onExplore={startSimulation} />
 
-      <section className="home-intro">
+      <section className="home-intro" id="home-intro">
         <div className="section-heading">
           <div>
             <span className="section-kicker">JIKAI UNIVERSE</span>
@@ -36,7 +36,7 @@ export default function HomePage({ onChooseExample }) {
           className="button-primary"
           onClick={startSimulation}
         >
-          Mulai Simulasi →
+          Mulai Simulasi
         </button>
       </section>
 

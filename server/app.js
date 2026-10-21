@@ -6,9 +6,13 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
+const allowedOrigins = ["http://localhost:5173", "https://jikai-pi.vercel.app"];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 

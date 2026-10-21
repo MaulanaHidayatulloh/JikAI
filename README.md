@@ -1,4 +1,4 @@
-# JikAI — Simulator Dunia Alternatif dengan AI 🌌
+# JikAI | Simulator Dunia Alternatif dengan AI 🌌
 
 **Bagaimana jika sejarah berjalan berbeda? Bagaimana jika satu keputusan kecil mengubah masa depan dunia?**
 

@@ -112,6 +112,100 @@ async function generateImagePromptWithCloudflare(context, accountId, apiToken) {
   return fallback;
 }
 
+async function extractCloudflareImage(response) {
+  const contentType = response.headers.get("content-type") || "";
+  const bytes = Buffer.from(await response.arrayBuffer());
+
+  if (!bytes.length) {
+    throw new Error("Cloudflare mengembalikan respons kosong.");
+  }
+
+  // Workers AI normally returns JSON containing result.image (base64), but
+  // support direct JPEG/PNG bytes too, so binary data is never parsed as JSON.
+  const looksLikeJson =
+    contentType.includes("application/json") ||
+    /^[\s\uFEFF]*[\[{]/.test(
+      bytes.toString("utf8", 0, Math.min(bytes.length, 80)),
+    );
+
+  if (looksLikeJson) {
+    let data;
+    try {
+      data = JSON.parse(bytes.toString("utf8"));
+    } catch {
+      throw new Error("Respons JSON Cloudflare tidak valid.");
+    }
+
+    if (!response.ok || data?.success === false || data?.errors?.length) {
+      const details = (data?.errors || [])
+        .map((item) => item?.message || item?.code)
+        .filter(Boolean)
+        .join("; ");
+      throw new Error(details || `HTTP ${response.status}`);
+    }
+
+    const image = data?.result?.image || data?.image;
+    if (typeof image === "string" && image.length > 0) {
+      if (image.startsWith("data:image/")) return image;
+      return `data:image/jpeg;base64,${image}`;
+    }
+    throw new Error("Respons Cloudflare tidak berisi gambar.");
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      `HTTP ${response.status}: ${bytes.toString("utf8", 0, 500)}`,
+    );
+  }
+
+  let mimeType = contentType.split(";")[0].trim().toLowerCase();
+  if (!mimeType.startsWith("image/")) {
+    if (bytes[0] === 0xff && bytes[1] === 0xd8) mimeType = "image/jpeg";
+    else if (bytes[0] === 0x89 && bytes.toString("ascii", 1, 4) === "PNG")
+      mimeType = "image/png";
+    else
+      throw new Error(
+        `Tipe respons gambar tidak dikenali: ${contentType || "unknown"}`,
+      );
+  }
+
+  return `data:${mimeType};base64,${bytes.toString("base64")}`;
+}
+
+async function generateWithFluxSchnell(accountId, apiToken, prompt) {
+  const response = await fetch(
+    `${CLOUDFLARE_API_BASE}/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt, steps: 4 }),
+    },
+  );
+  return extractCloudflareImage(response);
+}
+
+async function generateWithFluxKleinFallback(accountId, apiToken, prompt) {
+  // FLUX.2 Klein 4B requires multipart/form-data. Let fetch set the boundary;
+  // setting Content-Type manually would omit the required boundary parameter.
+  const form = new FormData();
+  form.append("prompt", prompt);
+  form.append("width", "1024");
+  form.append("height", "768");
+
+  const response = await fetch(
+    `${CLOUDFLARE_API_BASE}/${accountId}/ai/run/@cf/black-forest-labs/flux-2-klein-4b`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiToken}` },
+      body: form,
+    },
+  );
+  return extractCloudflareImage(response);
+}
+
 export async function generateScenarioImage(context) {
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
@@ -156,25 +250,30 @@ export async function generateScenarioImage(context) {
       3000,
     );
 
-  const response = await fetch(
-    `${CLOUDFLARE_API_BASE}/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt: finalPrompt, steps: 4 }),
-    },
-  );
-
-  const data = await response.json();
-  if (!response.ok || !data.success || !data.result?.image) {
-    console.error("Cloudflare image error:", data.errors);
-    throw new Error(
-      "Gambar gagal dibuat. Periksa konfigurasi dan izin Workers AI Cloudflare, lalu coba lagi.",
+  // Primary model remains the original FLUX.1 Schnell. Only if it errors do we
+  // make one fallback attempt with FLUX.2 Klein 4B.
+  try {
+    return await generateWithFluxSchnell(accountId, apiToken, finalPrompt);
+  } catch (primaryError) {
+    console.warn(
+      "FLUX.1 Schnell gagal; mencoba model cadangan FLUX.2 Klein 4B:",
+      primaryError?.message || primaryError,
     );
-  }
 
-  return `data:image/jpeg;base64,${data.result.image}`;
+    try {
+      return await generateWithFluxKleinFallback(
+        accountId,
+        apiToken,
+        finalPrompt,
+      );
+    } catch (fallbackError) {
+      console.error(
+        "Model utama dan cadangan Cloudflare gagal:",
+        fallbackError?.message || fallbackError,
+      );
+      throw new Error(
+        `Gambar gagal dibuat. FLUX.1 Schnell dan FLUX.2 Klein 4B sama-sama gagal. Detail cadangan: ${fallbackError?.message || "respons gambar tidak valid"}`,
+      );
+    }
+  }
 }

@@ -1,4 +1,4 @@
-# JikAI | Simulator Dunia Alternatif dengan AI 🌌
+# JikAI | Simulator Dunia Alternatif dengan AI
 
 **Bagaimana jika sejarah berjalan berbeda? Bagaimana jika satu keputusan kecil mengubah masa depan dunia?**
 
@@ -19,15 +19,16 @@ JikAI adalah website simulator dunia alternatif berbasis kecerdasan buatan (AI) 
 
 ## 🛠️ Teknologi yang Digunakan
 
-| Teknologi    | Kegunaan                                       |
-| ------------ | ---------------------------------------------- |
-| React        | Membangun antarmuka pengguna                   |
-| Vite         | Development server dan proses build frontend   |
-| React Router | Navigasi ant halaman                           |
-| Node.js      | Menjalankan runtime backend                    |
-| Express.js   | Menyediakan API untuk frontend                 |
-| Groq AI      | Memproses dan menghasilkan skenario alternatif |
-| Vercel       | Deployment aplikasi web dan backend            |
+| Teknologi    | Kegunaan                                        |
+| ------------ | ----------------------------------------------- |
+| React        | Membangun antarmuka pengguna                    |
+| Vite         | Development server dan proses build frontend    |
+| React Router | Navigasi ant halaman                            |
+| Node.js      | Menjalankan runtime backend                     |
+| Express.js   | Menyediakan API untuk frontend                  |
+| Groq AI      | Memproses dan menghasilkan skenario alternatif  |
+| Groq AI      | Memproses dan menghasilkan gambar dari skenario |
+| Vercel       | Deployment aplikasi web dan backend             |
 
 ## 🏗️ Arsitektur Proyek
 
@@ -35,7 +36,7 @@ JikAI menggunakan arsitektur frontend dan backend terpisah agar antarmuka penggu
 
 - **Frontend:** React + Vite, bertanggung jawab atas antarmuka, navigasi, dan interaksi pengguna.
 - **Backend:** Node.js + Express, menangani permintaan API dan komunikasi dengan Groq AI.
-- **AI Provider:** Groq digunakan untuk menghasilkan skenario, cabang timeline, dan perbandingan dunia.
+- **AI Provider:** Groq digunakan untuk menghasilkan skenario, cabang timeline, dan perbandingan dunia. Dan Cloudflare workers ai untuk menghasilkan gambar.
 
 API key disimpan di sisi backend dan tidak seharusnya dimasukkan ke dalam kode frontend.
 
@@ -48,6 +49,8 @@ Pastikan perangkat kamu sudah memiliki:
 - Node.js dan npm.
 - Git.
 - API key Groq yang valid.
+- ID Account Cloudflare
+- API key Cloudflare
 
 ### 1. Clone repository
 
@@ -71,27 +74,15 @@ cd server
 npm install
 ```
 
-Salin file konfigurasi contoh:
-
-**Windows (Command Prompt):**
-
-```cmd
-copy .env.example .env
-```
-
-**macOS / Linux:**
-
-```bash
-cp .env.example .env
-```
-
 Buka file `server/.env`, kemudian isi API key:
 
 ```env
 GROQ_API_KEY=masukkan_api_key_groq_kamu
+CLOUDFLARE_ACCOUNT_ID=masukkan_Account_ID_Cloudflare_kamu
+CLOUDFLARE_API_TOKEN=masukkan_api_key_cloudflare_kamu
 ```
 
-Gunakan nama variabel dan konfigurasi lain sesuai kebutuhan yang tercantum dalam `server/.env.example`.
+Gunakan nama variabel dan konfigurasi lain sesuai kebutuhan.
 
 ### 4. Jalankan backend
 
@@ -121,7 +112,8 @@ JikAI menggunakan deployment berbasis Vercel dengan frontend dan backend yang di
 
 Saat melakukan deployment sendiri, pastikan:
 
-1. Variabel lingkungan `GROQ_API_KEY` sudah dikonfigurasi pada lingkungan backend.
+1. Variabel lingkungan `GROQ_API_KEY` `CLOUDFLARE_ACCOUNT_ID`
+   `CLOUDFLARE_API_TOKEN` sudah dikonfigurasi pada lingkungan backend.
 2. URL backend yang digunakan frontend sudah benar.
 3. CORS backend mengizinkan origin frontend yang digunakan.
 4. API key tidak pernah dimasukkan ke repository publik atau dibagikan kepada pengguna.
@@ -130,7 +122,6 @@ Saat melakukan deployment sendiri, pastikan:
 
 - Simpan API key dalam file `.env` atau environment variables pada platform deployment.
 - Jangan commit file `.env` yang berisi kredensial.
-- Gunakan `server/.env.example` sebagai referensi konfigurasi tanpa memasukkan API key asli.
 - Pastikan endpoint backend memvalidasi input sebelum meneruskannya ke layanan AI.
 
 ## 🗺️ Rencana Pengembangan

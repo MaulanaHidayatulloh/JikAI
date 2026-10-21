@@ -19,16 +19,16 @@ JikAI adalah website simulator dunia alternatif berbasis kecerdasan buatan (AI) 
 
 ## 🛠️ Teknologi yang Digunakan
 
-| Teknologi    | Kegunaan                                        |
-| ------------ | ----------------------------------------------- |
-| React        | Membangun antarmuka pengguna                    |
-| Vite         | Development server dan proses build frontend    |
-| React Router | Navigasi ant halaman                            |
-| Node.js      | Menjalankan runtime backend                     |
-| Express.js   | Menyediakan API untuk frontend                  |
-| Groq AI      | Memproses dan menghasilkan skenario alternatif  |
-| Groq AI      | Memproses dan menghasilkan gambar dari skenario |
-| Vercel       | Deployment aplikasi web dan backend             |
+| Teknologi             | Kegunaan                                        |
+| --------------------- | ----------------------------------------------- |
+| React                 | Membangun antarmuka pengguna                    |
+| Vite                  | Development server dan proses build frontend    |
+| React Router          | Navigasi ant halaman                            |
+| Node.js               | Menjalankan runtime backend                     |
+| Express.js            | Menyediakan API untuk frontend                  |
+| Groq AI               | Memproses dan menghasilkan skenario alternatif  |
+| Cloudflare Workers AI | Memproses dan menghasilkan gambar dari skenario |
+| Vercel                | Deployment aplikasi web dan backend             |
 
 ## 🏗️ Arsitektur Proyek
 

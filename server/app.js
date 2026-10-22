@@ -28,7 +28,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/generate-scenario", scenarioRoutes);
 
-// Harus dipasang setelah routes.
+// dipasang setelah routes.
 app.use(errorHandler);
 
 export default app;

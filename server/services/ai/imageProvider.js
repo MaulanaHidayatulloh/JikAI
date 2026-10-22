@@ -18,8 +18,6 @@ function buildContextualFallback(context) {
   const timeline = clean(context.timelineContext, 600);
   const choice = clean(context.choice, 240);
 
-  // This is deliberately topic-neutral. It never assumes a sport, country,
-  // historical period, or setting; it uses only information from this scenario.
   const centralIdea = userIdea || visualFocus || premise || title;
   const details = [
     visualFocus && visualFocus !== centralIdea
@@ -48,8 +46,6 @@ async function generateImagePromptWithCloudflare(context, accountId, apiToken) {
   const fallback = buildContextualFallback(context);
   const originalIdea = clean(context.userPrompt, 700);
 
-  // Cloudflare Workers AI interprets the user's idea and converts it to a
-  // concrete English prompt for FLUX. No topic-specific visual rules are used.
   try {
     const response = await fetch(
       `${CLOUDFLARE_API_BASE}/${accountId}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
@@ -120,8 +116,6 @@ async function extractCloudflareImage(response) {
     throw new Error("Cloudflare mengembalikan respons kosong.");
   }
 
-  // Workers AI normally returns JSON containing result.image (base64), but
-  // support direct JPEG/PNG bytes too, so binary data is never parsed as JSON.
   const looksLikeJson =
     contentType.includes("application/json") ||
     /^[\s\uFEFF]*[\[{]/.test(
@@ -188,8 +182,6 @@ async function generateWithFluxSchnell(accountId, apiToken, prompt) {
 }
 
 async function generateWithFluxKleinFallback(accountId, apiToken, prompt) {
-  // FLUX.2 Klein 4B requires multipart/form-data. Let fetch set the boundary;
-  // setting Content-Type manually would omit the required boundary parameter.
   const form = new FormData();
   form.append("prompt", prompt);
   form.append("width", "1024");
@@ -250,8 +242,6 @@ export async function generateScenarioImage(context) {
       3000,
     );
 
-  // Primary model remains the original FLUX.1 Schnell. Only if it errors do we
-  // make one fallback attempt with FLUX.2 Klein 4B.
   try {
     return await generateWithFluxSchnell(accountId, apiToken, finalPrompt);
   } catch (primaryError) {

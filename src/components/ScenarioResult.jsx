@@ -9,6 +9,7 @@ import {
   generateTimelineBranch,
   compareScenarioWorlds,
   generateScenarioImage,
+  continueWorldTimeline,
 } from "../services/simulationService";
 
 const typeLabels = {
@@ -56,7 +57,20 @@ function TimelineEvent({ event, index, onExplore, isSelected }) {
   );
 }
 
-function BranchTimeline({ branch }) {
+function BranchTimeline({
+  branch,
+  onExplore,
+  selectedEvent,
+  customChoice,
+  setCustomChoice,
+  branchLoading,
+  branchError,
+  onChooseBranch,
+  onContinueTimeline,
+  continuationLoading,
+  continuationBusy,
+  continuationError,
+}) {
   return (
     <section className="branch-result" aria-live="polite">
       <div className="branch-result-header">
@@ -76,13 +90,127 @@ function BranchTimeline({ branch }) {
             key={event.id ?? `${event.year}-${index}`}
           >
             <span className="branch-event-index">{index + 1}</span>
-            <div>
+            <div className="branch-event-content">
               <span className="timeline-event-year">Tahun {event.year}</span>
               <h5>{event.title}</h5>
               <p>{event.description}</p>
+              <button
+                type="button"
+                className="timeline-branch-trigger branch-nested-trigger"
+                onClick={() => onExplore(event, branch.id)}
+                aria-expanded={Boolean(
+                  selectedEvent &&
+                  eventIdentity(selectedEvent) === eventIdentity(event) &&
+                  selectedEvent.parentBranchId === branch.id,
+                )}
+              >
+                <span aria-hidden="true">⑂</span>
+                {selectedEvent &&
+                eventIdentity(selectedEvent) === eventIdentity(event) &&
+                selectedEvent.parentBranchId === branch.id
+                  ? "Tutup pilihan cabang"
+                  : "Buat cabang dari peristiwa ini"}
+              </button>
+              {selectedEvent &&
+                eventIdentity(selectedEvent) === eventIdentity(event) &&
+                selectedEvent.parentBranchId === branch.id && (
+                  <div className="branch-choice-panel branch-nested-choice-panel">
+                    <span className="scenario-result-label">
+                      TENTUKAN KEPUTUSAN LANJUTAN
+                    </span>
+                    <p>
+                      Cabang baru akan dibuat dari peristiwa{" "}
+                      <strong>{event.title}</strong> di dunia{" "}
+                      <strong>{branch.title}</strong>.
+                    </p>
+                    <label
+                      className="branch-custom-choice-label"
+                      htmlFor={`nested-branch-choice-${branch.id}-${eventIdentity(event)}`}
+                    >
+                      Keputusan alternatif
+                    </label>
+                    <textarea
+                      id={`nested-branch-choice-${branch.id}-${eventIdentity(event)}`}
+                      className="branch-custom-choice-input"
+                      value={customChoice}
+                      onChange={(inputEvent) =>
+                        setCustomChoice(inputEvent.target.value)
+                      }
+                      placeholder="Tuliskan keputusan berbeda yang ingin kamu simulasikan..."
+                      maxLength={240}
+                      rows={3}
+                      disabled={branchLoading}
+                    />
+                    <div className="branch-custom-choice-footer">
+                      <span className="branch-custom-choice-hint">
+                        Keputusan ini akan menjadi cabang baru tepat di bawah
+                        dunia ini.
+                      </span>
+                      <span
+                        className={
+                          customChoice.length >= 220 ? "is-near-limit" : ""
+                        }
+                      >
+                        {customChoice.length}/240
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="button-primary branch-custom-choice-submit"
+                      onClick={() => onChooseBranch(customChoice.trim())}
+                      disabled={branchLoading || !customChoice.trim()}
+                    >
+                      {branchLoading
+                        ? "Menyimulasikan..."
+                        : "Buat cabang lanjutan ↗"}
+                    </button>
+                    {branchLoading && (
+                      <div className="branch-loading" role="status">
+                        <span className="scenario-loading-spinner" />
+                        <span>
+                          JikAI sedang menyimulasikan cabang lanjutan...
+                        </span>
+                      </div>
+                    )}
+                    {branchError && (
+                      <p className="branch-error" role="alert">
+                        {branchError}
+                      </p>
+                    )}
+                  </div>
+                )}
             </div>
           </article>
         ))}
+      </div>
+      <div className="timeline-continue-actions">
+        <button
+          type="button"
+          className="timeline-continue-button"
+          onClick={onContinueTimeline}
+          disabled={continuationBusy || branch.timeline.length >= 18}
+        >
+          {continuationLoading
+            ? "Melanjutkan simulasi..."
+            : "Lanjutkan dunia ini +3 peristiwa →"}
+        </button>
+        {branch.timeline.length >= 18 && (
+          <span className="timeline-continue-note">
+            Kelanjutan berhenti agar jumlah peristiwa tidak melewati batas 20
+            per dunia.
+          </span>
+        )}
+        {continuationError && (
+          <p className="branch-error" role="alert">
+            {continuationError}
+          </p>
+        )}
+        {continuationLoading && (
+          <div className="branch-loading" role="status">
+            <span className="scenario-loading-spinner" />
+            <span>JikAI sedang melanjutkan perkembangan dunia ini...</span>
+          </div>
+        )}
       </div>
       <p className="branch-disclaimer">
         Cabang ini adalah salah satu kemungkinan hipotetis, bukan prediksi
@@ -92,10 +220,71 @@ function BranchTimeline({ branch }) {
   );
 }
 
+function BranchTreeNodes({
+  branches,
+  parentBranchId = null,
+  activeBranchId,
+  onSelect,
+}) {
+  const children = branches.filter(
+    (branch) => (branch.parentBranchId ?? null) === parentBranchId,
+  );
+  if (!children.length) return null;
+
+  return (
+    <div
+      className={parentBranchId ? "branch-tree-children" : "branch-tree-list"}
+    >
+      {children.map((branch) => (
+        <div className="branch-tree-node" key={branch.id}>
+          <button
+            type="button"
+            className={`branch-tree-item${branch.id === activeBranchId ? " is-active" : ""}`}
+            onClick={() => onSelect(branch.id)}
+            aria-pressed={branch.id === activeBranchId}
+          >
+            <span className="branch-tree-connector" aria-hidden="true">
+              ↳
+            </span>
+            <span className="branch-tree-item-content">
+              <strong>{branch.title}</strong>
+              <span>
+                {branch.originEvent?.year
+                  ? `Tahun ${branch.originEvent.year} · `
+                  : ""}
+                {branch.originEvent?.title || "Peristiwa awal"}
+              </span>
+              <span className="branch-tree-choice">
+                Pilihan: {branch.choice}
+              </span>
+            </span>
+            <span className="branch-tree-open">
+              {branch.id === activeBranchId ? "Sedang dibuka" : "Buka cabang →"}
+            </span>
+          </button>
+          <BranchTreeNodes
+            branches={branches}
+            parentBranchId={branch.id}
+            activeBranchId={activeBranchId}
+            onSelect={onSelect}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ScenarioResult({ scenario }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [customChoice, setCustomChoice] = useState("");
-  const [activeBranch, setActiveBranch] = useState(null);
+  const [branches, setBranches] = useState([]);
+  const [timelineEvents, setTimelineEvents] = useState([]);
+  const [continuationLoading, setContinuationLoading] = useState("");
+  const [continuationError, setContinuationError] = useState("");
+  const [continuationErrorFor, setContinuationErrorFor] = useState("");
+  const [activeBranchId, setActiveBranchId] = useState(null);
+  const activeBranch =
+    branches.find((branch) => branch.id === activeBranchId) || null;
   const [branchLoading, setBranchLoading] = useState(false);
   const [branchError, setBranchError] = useState("");
   const [comparison, setComparison] = useState(null);
@@ -119,11 +308,31 @@ export default function ScenarioResult({ scenario }) {
     const progress = getSimulationProgress(scenario.id);
 
     setSelectedEvent(progress?.selectedEvent ?? null);
-    setActiveBranch(progress?.activeBranch ?? null);
+    setTimelineEvents(
+      Array.isArray(progress?.timelineEvents)
+        ? progress.timelineEvents
+        : Array.isArray(scenario.timeline)
+          ? scenario.timeline
+          : [],
+    );
+    const restoredBranches = Array.isArray(progress?.branches)
+      ? progress.branches
+      : progress?.activeBranch
+        ? [progress.activeBranch]
+        : [];
+    setBranches(restoredBranches);
+    setActiveBranchId(
+      progress?.activeBranchId ??
+        progress?.activeBranch?.id ??
+        restoredBranches[0]?.id ??
+        null,
+    );
     setComparison(progress?.comparison ?? null);
 
     setBranchError("");
     setComparisonError("");
+    setContinuationError("");
+    setContinuationErrorFor("");
     setBranchLoading(false);
     setComparisonLoading(false);
 
@@ -136,6 +345,10 @@ export default function ScenarioResult({ scenario }) {
 
     saveSimulationProgress(scenario.id, {
       selectedEvent,
+      timelineEvents,
+      branches,
+      activeBranchId,
+      // Tetap simpan activeBranch untuk kompatibilitas dengan progres versi lama.
       activeBranch,
       comparison,
     });
@@ -143,6 +356,9 @@ export default function ScenarioResult({ scenario }) {
     scenario?.id,
     restoredScenarioId,
     selectedEvent,
+    timelineEvents,
+    branches,
+    activeBranchId,
     activeBranch,
     comparison,
   ]);
@@ -347,11 +563,21 @@ export default function ScenarioResult({ scenario }) {
   const assumptions = Array.isArray(scenario.assumptions)
     ? scenario.assumptions
     : [];
-  const timeline = Array.isArray(scenario.timeline) ? scenario.timeline : [];
+  const timeline =
+    timelineEvents.length > 0
+      ? timelineEvents
+      : Array.isArray(scenario.timeline)
+        ? scenario.timeline
+        : [];
 
-  function toggleEvent(event) {
+  function toggleEvent(event, parentBranchId = null) {
+    const eventForBranch = { ...event, parentBranchId };
     setSelectedEvent((current) =>
-      current && eventIdentity(current) === eventIdentity(event) ? null : event,
+      current &&
+      eventIdentity(current) === eventIdentity(event) &&
+      (current.parentBranchId ?? null) === parentBranchId
+        ? null
+        : eventForBranch,
     );
     setCustomChoice("");
     setBranchError("");
@@ -361,16 +587,54 @@ export default function ScenarioResult({ scenario }) {
     if (!selectedEvent || branchLoading) return;
     setBranchLoading(true);
     setBranchError("");
-    setActiveBranch(null);
     setComparison(null);
     setComparisonError("");
     try {
+      const parentBranch = selectedEvent.parentBranchId
+        ? branches.find((item) => item.id === selectedEvent.parentBranchId) ||
+          null
+        : null;
+      const ancestry = [];
+      let ancestor = parentBranch?.parentBranchId
+        ? branches.find((item) => item.id === parentBranch.parentBranchId) ||
+          null
+        : null;
+      while (ancestor) {
+        ancestry.unshift({
+          title: ancestor.title,
+          summary: ancestor.summary,
+          choice: ancestor.choice,
+          timeline: ancestor.timeline || [],
+        });
+        ancestor = ancestor.parentBranchId
+          ? branches.find((item) => item.id === ancestor.parentBranchId) || null
+          : null;
+      }
+      const parentTimeline = parentBranch?.timeline || [];
+      const selectedParentEventIndex = parentTimeline.findIndex(
+        (item) => eventIdentity(item) === eventIdentity(selectedEvent),
+      );
+      const timelineAtDecision =
+        selectedParentEventIndex >= 0
+          ? parentTimeline.slice(0, selectedParentEventIndex + 1)
+          : parentTimeline;
       const branch = await generateTimelineBranch({
         scenario,
         event: selectedEvent,
         choice,
+        parentBranch: parentBranch
+          ? { ...parentBranch, timeline: timelineAtDecision, ancestry }
+          : null,
       });
-      setActiveBranch({ ...branch, originEvent: selectedEvent, choice });
+      const branchWithOrigin = {
+        ...branch,
+        originEvent: selectedEvent,
+        choice,
+        parentBranchId: selectedEvent.parentBranchId ?? null,
+        createdAt: new Date().toISOString(),
+      };
+      setBranches((current) => [branchWithOrigin, ...current]);
+      setActiveBranchId(branchWithOrigin.id);
       setSelectedEvent(null);
     } catch (error) {
       setBranchError(
@@ -378,6 +642,51 @@ export default function ScenarioResult({ scenario }) {
       );
     } finally {
       setBranchLoading(false);
+    }
+  }
+
+  async function handleContinueTimeline(targetBranch = null) {
+    const worldKey = targetBranch?.id || "original";
+    const currentTimeline = targetBranch?.timeline || timeline;
+    if (continuationLoading || currentTimeline.length >= 18) return;
+    setContinuationLoading(worldKey);
+    setContinuationError("");
+    setContinuationErrorFor(worldKey);
+    try {
+      const events = await continueWorldTimeline({
+        scenario,
+        world: targetBranch
+          ? {
+              title: targetBranch.title,
+              summary: targetBranch.summary,
+              choice: targetBranch.choice,
+            }
+          : { title: scenario.title, summary: scenario.premise, choice: "" },
+        timeline: currentTimeline,
+      });
+      if (targetBranch) {
+        setBranches((current) =>
+          current.map((branch) =>
+            branch.id === targetBranch.id
+              ? { ...branch, timeline: [...(branch.timeline || []), ...events] }
+              : branch,
+          ),
+        );
+        setComparison(null);
+        setComparisonError("");
+      } else {
+        setTimelineEvents((current) => [
+          ...(current.length ? current : scenario.timeline || []),
+          ...events,
+        ]);
+      }
+    } catch (error) {
+      setContinuationError(
+        error.message || "Timeline gagal dilanjutkan. Silakan coba lagi.",
+      );
+      setContinuationErrorFor(worldKey);
+    } finally {
+      setContinuationLoading("");
     }
   }
 
@@ -390,6 +699,7 @@ export default function ScenarioResult({ scenario }) {
       const result = await compareScenarioWorlds({
         scenario,
         branch: activeBranch,
+        originalTimeline: timeline,
       });
       setComparison(result);
     } catch (error) {
@@ -476,10 +786,12 @@ export default function ScenarioResult({ scenario }) {
               onExplore={toggleEvent}
               isSelected={
                 selectedEvent &&
+                (selectedEvent.parentBranchId ?? null) === null &&
                 eventIdentity(selectedEvent) === eventIdentity(event)
               }
             />
             {selectedEvent &&
+              (selectedEvent.parentBranchId ?? null) === null &&
               eventIdentity(selectedEvent) === eventIdentity(event) && (
                 <div className="branch-choice-panel">
                   <span className="scenario-result-label">
@@ -546,6 +858,76 @@ export default function ScenarioResult({ scenario }) {
           </div>
         ))}
       </div>
+      <div className="timeline-continue-actions">
+        <button
+          type="button"
+          className="timeline-continue-button"
+          onClick={() => handleContinueTimeline()}
+          disabled={Boolean(continuationLoading) || timeline.length >= 18}
+        >
+          {continuationLoading === "original"
+            ? "Melanjutkan simulasi..."
+            : "Lanjutkan ke periode berikutnya +3 peristiwa →"}
+        </button>
+        <span className="timeline-continue-note">
+          JikAI akan melanjutkan dari peristiwa terakhir tanpa mengulang
+          kejadian sebelumnya.
+        </span>
+        {timeline.length >= 18 && (
+          <span className="timeline-continue-note">
+            Kelanjutan berhenti agar jumlah peristiwa tidak melewati batas 20
+            per dunia.
+          </span>
+        )}
+        {continuationError && continuationErrorFor === "original" && (
+          <p className="branch-error" role="alert">
+            {continuationError}
+          </p>
+        )}
+        {continuationLoading === "original" && (
+          <div className="branch-loading" role="status">
+            <span className="scenario-loading-spinner" />
+            <span>JikAI sedang melanjutkan perkembangan dunia awal...</span>
+          </div>
+        )}
+      </div>
+
+      {branches.length > 0 && (
+        <section className="branch-tree-panel" aria-label="Pohon cabang dunia">
+          <div className="branch-tree-heading">
+            <div>
+              <span className="section-kicker">POHON CABANG DUNIA</span>
+              <h3>Jelajahi kemungkinan lain</h3>
+              <p>
+                Setiap pilihan menghasilkan dunia alternatif tersendiri. Pilih
+                cabang untuk membuka kembali hasilnya.
+              </p>
+            </div>
+            <span className="timeline-count">{branches.length} cabang</span>
+          </div>
+          <div className="branch-tree-root">
+            <span className="branch-tree-root-icon" aria-hidden="true">
+              ◎
+            </span>
+            <div>
+              <strong>{scenario.title}</strong>
+              <span>Dunia awal</span>
+            </div>
+          </div>
+          <BranchTreeNodes
+            branches={branches}
+            activeBranchId={activeBranchId}
+            onSelect={(branchId) => {
+              setActiveBranchId(branchId);
+              setComparison(null);
+              setComparisonError("");
+              setContinuationError("");
+              setContinuationErrorFor("");
+              setSelectedEvent(null);
+            }}
+          />
+        </section>
+      )}
 
       {activeBranch && (
         <div className="branch-outcome-wrap">
@@ -583,7 +965,22 @@ export default function ScenarioResult({ scenario }) {
             )}
           </div>
 
-          <BranchTimeline branch={activeBranch} />
+          <BranchTimeline
+            branch={activeBranch}
+            onExplore={toggleEvent}
+            selectedEvent={selectedEvent}
+            customChoice={customChoice}
+            setCustomChoice={setCustomChoice}
+            branchLoading={branchLoading}
+            branchError={branchError}
+            onChooseBranch={chooseBranch}
+            onContinueTimeline={() => handleContinueTimeline(activeBranch)}
+            continuationLoading={continuationLoading === activeBranch.id}
+            continuationBusy={Boolean(continuationLoading)}
+            continuationError={
+              continuationErrorFor === activeBranch.id ? continuationError : ""
+            }
+          />
 
           <div className="world-comparison-actions">
             <button
@@ -603,7 +1000,7 @@ export default function ScenarioResult({ scenario }) {
               type="button"
               className="branch-reset-button"
               onClick={() => {
-                setActiveBranch(null);
+                setActiveBranchId(null);
                 setSelectedEvent(null);
                 setBranchError("");
                 setComparison(null);

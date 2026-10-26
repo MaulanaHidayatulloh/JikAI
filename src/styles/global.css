@@ -2428,3 +2428,262 @@ p {
     transition: none;
   }
 }
+
+/* Pohon cabang dunia alternatif */
+.branch-tree-panel {
+  margin: 30px 0;
+  padding: clamp(18px, 3vw, 28px);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--surface, #fff);
+  box-shadow: 0 12px 34px rgba(24, 32, 56, 0.045);
+}
+
+.branch-tree-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.branch-tree-heading h3 {
+  margin: 7px 0;
+  color: var(--text-h);
+  font-size: clamp(19px, 2.5vw, 25px);
+}
+
+.branch-tree-heading p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--text-muted, #697386);
+  line-height: 1.65;
+}
+
+.branch-tree-root {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 13px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-muted, #f8fafc);
+}
+
+.branch-tree-root-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 11px;
+  color: var(--accent, #6658d3);
+  background: var(--accent-bg, #f0edff);
+  font-size: 22px;
+}
+
+.branch-tree-root strong,
+.branch-tree-root span:last-child {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.branch-tree-root strong {
+  color: var(--text-h);
+  font-size: 13px;
+}
+
+.branch-tree-root div > span {
+  margin-top: 3px;
+  color: var(--text-muted, #697386);
+  font-size: 11px;
+}
+
+.branch-tree-list {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 0 17px;
+  padding-left: 21px;
+  border-left: 2px solid var(--border);
+}
+
+.branch-tree-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px 15px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: inherit;
+  background: var(--surface, #fff);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.branch-tree-item:hover {
+  border-color: var(--accent-border, #b7aefa);
+  transform: translateY(-1px);
+}
+
+.branch-tree-item.is-active {
+  border-color: var(--accent, #6658d3);
+  background: var(--accent-bg, #f6f4ff);
+}
+
+.branch-tree-connector {
+  align-self: flex-start;
+  color: var(--accent, #6658d3);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.branch-tree-item-content {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+}
+
+.branch-tree-item-content strong {
+  color: var(--text-h);
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.branch-tree-item-content > span {
+  color: var(--text-muted, #697386);
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.branch-tree-item-content .branch-tree-choice {
+  color: var(--text, #475569);
+}
+
+.branch-tree-open {
+  flex: 0 0 auto;
+  color: var(--accent, #6658d3);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .branch-tree-heading {
+    flex-direction: column;
+  }
+
+  .branch-tree-item {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .branch-tree-open {
+    display: none;
+  }
+
+  .branch-tree-list {
+    margin-left: 7px;
+    padding-left: 12px;
+  }
+}
+
+/* Percabangan bertingkat: setiap generasi ditampilkan di bawah dunia induknya. */
+.branch-tree-node {
+  min-width: 0;
+}
+
+.branch-tree-children {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 4px 22px;
+  padding-left: 16px;
+  border-left: 1px solid var(--timeline-border);
+}
+
+.branch-nested-trigger {
+  margin-top: 10px;
+}
+
+.branch-nested-choice-panel {
+  margin: 14px 0 8px;
+  padding: 16px;
+}
+
+.branch-event-content {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .branch-tree-children {
+    margin-left: 10px;
+    padding-left: 9px;
+  }
+}
+
+/* Simulasi berbasis waktu: melanjutkan timeline tanpa mengulang peristiwa. */
+.timeline-continue-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 18px 0 28px 53px;
+  min-width: 0;
+}
+
+.timeline-continue-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 15px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--purple);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.timeline-continue-button:hover:not(:disabled) {
+  border-color: var(--purple);
+  background: var(--palette-f1efff);
+  transform: translateY(-1px);
+}
+
+.timeline-continue-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.timeline-continue-note {
+  max-width: 560px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+@media (max-width: 640px) {
+  .timeline-continue-actions {
+    margin-left: 0;
+  }
+
+  .timeline-continue-button {
+    width: 100%;
+    text-align: center;
+  }
+}

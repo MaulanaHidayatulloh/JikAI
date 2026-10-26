@@ -13,7 +13,12 @@ export async function generateScenario(configuration) {
   return result.scenario;
 }
 
-export async function generateTimelineBranch({ scenario, event, choice }) {
+export async function generateTimelineBranch({
+  scenario,
+  event,
+  choice,
+  parentBranch = null,
+}) {
   const result = await apiRequest("/api/generate-scenario/branch", {
     method: "POST",
     body: JSON.stringify({
@@ -30,6 +35,32 @@ export async function generateTimelineBranch({ scenario, event, choice }) {
         description: event.description,
       },
       choice,
+      parentBranch: parentBranch
+        ? {
+            title: parentBranch.title,
+            summary: parentBranch.summary,
+            choice: parentBranch.choice,
+            timeline: (parentBranch.timeline || [])
+              .slice(-6)
+              .map(({ year, title, description }) => ({
+                year,
+                title,
+                description,
+              })),
+            ancestry: (parentBranch.ancestry || []).map((ancestor) => ({
+              title: ancestor.title,
+              summary: ancestor.summary,
+              choice: ancestor.choice,
+              timeline: (ancestor.timeline || [])
+                .slice(-4)
+                .map(({ year, title, description }) => ({
+                  year,
+                  title,
+                  description,
+                })),
+            })),
+          }
+        : null,
     }),
   });
 
@@ -40,24 +71,71 @@ export async function generateTimelineBranch({ scenario, event, choice }) {
   return result.branch;
 }
 
-export async function compareScenarioWorlds({ scenario, branch }) {
+export async function continueWorldTimeline({ scenario, world, timeline }) {
+  const result = await apiRequest("/api/generate-scenario/continue", {
+    method: "POST",
+    body: JSON.stringify({
+      scenario: {
+        title: scenario.title,
+        premise: scenario.premise,
+        prompt: scenario.prompt,
+        category: scenario.category,
+      },
+      world: {
+        title: world.title,
+        summary: world.summary || scenario.premise,
+        choice: world.choice || "",
+      },
+      timeline: (timeline || [])
+        .slice(-8)
+        .map(({ year, title, description, type }) => ({
+          year,
+          title,
+          description,
+          type,
+        })),
+    }),
+  });
+
+  if (!Array.isArray(result.events) || result.events.length !== 3) {
+    throw new Error(
+      "Respons AI tidak berisi tiga peristiwa lanjutan yang valid.",
+    );
+  }
+
+  return result.events;
+}
+
+export async function compareScenarioWorlds({
+  scenario,
+  branch,
+  originalTimeline,
+}) {
   const result = await apiRequest("/api/generate-scenario/compare", {
     method: "POST",
     body: JSON.stringify({
       original: {
         title: scenario.title,
         premise: scenario.premise,
-        timeline: (scenario.timeline || []).map(
-          ({ year, title, description }) => ({ year, title, description }),
-        ),
+        timeline: (originalTimeline || scenario.timeline || [])
+          .slice(-10)
+          .map(({ year, title, description }) => ({
+            year,
+            title,
+            description: String(description || "").slice(0, 500),
+          })),
       },
       branch: {
         title: branch.title,
         summary: branch.summary,
         choice: branch.choice,
-        timeline: (branch.timeline || []).map(
-          ({ year, title, description }) => ({ year, title, description }),
-        ),
+        timeline: (branch.timeline || [])
+          .slice(-10)
+          .map(({ year, title, description }) => ({
+            year,
+            title,
+            description: String(description || "").slice(0, 500),
+          })),
       },
     }),
   });

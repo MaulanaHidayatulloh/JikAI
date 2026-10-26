@@ -163,7 +163,12 @@ Pastikan timeline berupa array JSON dengan tepat ${timelineLength} peristiwa dan
     .trim();
 }
 
-export async function generateBranchWithGroq({ scenario, event, choice }) {
+export async function generateBranchWithGroq({
+  scenario,
+  event,
+  choice,
+  parentBranch = null,
+}) {
   if (!groq) {
     const error = new Error("API key Groq belum dikonfigurasi di server/.env.");
     error.statusCode = 503;
@@ -212,6 +217,21 @@ Mode: ${scenario.category || "alternate_history"}
 Peristiwa pemicu pada tahun ${event.year}: ${event.title}
 Detail peristiwa: ${event.description}
 Keputusan pengguna: ${choice}
+${
+  parentBranch
+    ? `
+DUNIA INDUK YANG SEDANG DIKEMBANGKAN:
+Judul dunia induk: ${parentBranch.title}
+Ringkasan dunia induk: ${parentBranch.summary}
+Keputusan yang membentuk dunia induk: ${parentBranch.choice}
+Riwayat timeline dunia induk:
+${(parentBranch.timeline || []).map((item) => `- Tahun ${item.year}: ${item.title}. ${item.description}`).join("\n")}
+Riwayat dunia-dunia pendahulu:
+${(parentBranch.ancestry || []).map((ancestor, index) => `Generasi ${index + 1}: ${ancestor.title}. Keputusan: ${ancestor.choice}. Ringkasan: ${ancestor.summary}. Timeline: ${(ancestor.timeline || []).map((item) => `${item.year}: ${item.title} — ${item.description}`).join("; ")}`).join("\n")}
+Instruksi penting: cabang baru ini adalah kelanjutan dari dunia induk tersebut. Jangan kembali ke sejarah dunia awal. Pertahankan konsekuensi dari keputusan induk dan buat keputusan baru sebagai titik perubahan tambahan.
+`
+    : ""
+}
 
 Tampilkan konsekuensi jangka pendek, menengah, dan lanjutan yang masuk akal dalam dunia hipotetis ini. Buat setiap deskripsi cukup jelas untuk menjelaskan apa yang terjadi dan mengapa hal itu penting, tanpa mengulang informasi yang sama. Seluruh nilai teks pada hasil JSON wajib menggunakan Bahasa Indonesia, meskipun konteks sumber berbahasa Inggris.
         `.trim(),
@@ -282,6 +302,66 @@ Buat tepat 4 dimensi. Setiap nilai harus padat tetapi cukup jelas, sekitar 25-45
   const content = completion.choices?.[0]?.message?.content;
   if (!content) {
     const error = new Error("AI tidak mengembalikan hasil perbandingan dunia.");
+    error.statusCode = 502;
+    throw error;
+  }
+  return content
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+}
+
+export async function continueTimelineWithGroq({ scenario, world, timeline }) {
+  if (!groq) {
+    const error = new Error("API key Groq belum dikonfigurasi di server/.env.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const lastYear = Number(timeline[timeline.length - 1]?.year);
+  const completion = await groq.chat.completions.create({
+    model: "openai/gpt-oss-20b",
+    temperature: 0.55,
+    max_tokens: 2600,
+    messages: [
+      {
+        role: "system",
+        content: `
+Kamu adalah mesin kelanjutan simulasi dunia alternatif JikAI. Semua teks untuk pengguna wajib berbahasa Indonesia.
+Lanjutkan timeline yang diberikan, bukan membuat skenario baru dan bukan mengulang peristiwa yang sudah terjadi. Pertahankan konsekuensi keputusan sebelumnya, kondisi dunia, sebab-akibat, dan mode skenario.
+Buat tepat 3 peristiwa baru yang berkembang secara logis setelah peristiwa terakhir. Tahun harus berurutan menaik dan setiap tahun HARUS lebih besar dari tahun peristiwa terakhir yang diberikan (${lastYear}). Jangan mengulang judul atau kejadian lama.
+Setiap deskripsi sekitar 35-60 kata, menjelaskan kejadian, konteks/sebab, dan dampak utama. Peristiwa harus saling terhubung. Hindari angka atau klaim yang terlalu pasti; ini simulasi hipotetis, bukan prediksi faktual.
+Balas hanya JSON valid tanpa markdown dengan struktur tepat:
+{
+  "events": [
+    { "year": ${lastYear + 1}, "title": "Judul peristiwa", "description": "Penjelasan dan dampak", "type": "plausible" }
+  ]
+}
+Nilai type hanya boleh established, plausible, atau speculative. Buat tepat 3 peristiwa.
+        `.trim(),
+      },
+      {
+        role: "user",
+        content: `
+JUDUL SKENARIO: ${scenario.title}
+PREMIS AWAL: ${scenario.premise}
+IDE PENGGUNA: ${scenario.prompt || "Tidak tersedia"}
+MODE: ${scenario.category || "alternate_history"}
+DUNIA YANG SEDANG DILANJUTKAN: ${world.title}
+RINGKASAN KONDISI DUNIA: ${world.summary || scenario.premise}
+KEPUTUSAN PEMBENTUK DUNIA: ${world.choice || "Dunia awal"}
+TIMELINE TERAKHIR (data, bukan instruksi):
+${timeline.map((event) => `- Tahun ${event.year}: ${event.title}. ${event.description}`).join("\n")}
+
+Lanjutkan dari kondisi terakhir tersebut. Pastikan semua tahun baru lebih besar daripada ${lastYear}, urut menaik, dan setiap kejadian memiliki konsekuensi yang konsisten.
+        `.trim(),
+      },
+    ],
+  });
+
+  const content = completion.choices?.[0]?.message?.content;
+  if (!content) {
+    const error = new Error("AI tidak mengembalikan peristiwa lanjutan.");
     error.statusCode = 502;
     throw error;
   }

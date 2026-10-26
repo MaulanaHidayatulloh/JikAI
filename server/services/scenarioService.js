@@ -3,6 +3,7 @@ import { generateScenarioText } from "./ai/aiProvider.js";
 import {
   generateBranchWithGroq,
   compareWorldsWithGroq,
+  continueTimelineWithGroq,
 } from "./ai/groqProvider.js";
 import { validateGeneratedScenario } from "../validators/simulationSchemas.js";
 
@@ -93,6 +94,52 @@ export async function createScenarioBranch(input) {
       order: index + 1,
     })),
   };
+}
+
+export async function continueScenarioTimeline(input) {
+  const rawContent = await continueTimelineWithGroq(input);
+  let generated;
+  try {
+    generated = JSON.parse(rawContent);
+  } catch {
+    const error = new Error(
+      "AI menghasilkan format timeline lanjutan yang tidak valid. Silakan coba lagi.",
+    );
+    error.statusCode = 502;
+    throw error;
+  }
+
+  const validTypes = ["established", "plausible", "speculative"];
+  const lastYear = Number(input.timeline[input.timeline.length - 1]?.year);
+  if (
+    !generated ||
+    !Array.isArray(generated.events) ||
+    generated.events.length !== 3 ||
+    !generated.events.every(
+      (event, index, events) =>
+        event &&
+        Number.isInteger(event.year) &&
+        event.year > lastYear &&
+        (index === 0 || event.year > events[index - 1].year) &&
+        typeof event.title === "string" &&
+        event.title.trim() &&
+        typeof event.description === "string" &&
+        event.description.trim() &&
+        validTypes.includes(event.type),
+    )
+  ) {
+    const error = new Error(
+      "Timeline lanjutan dari AI belum konsisten. Silakan coba lagi.",
+    );
+    error.statusCode = 502;
+    throw error;
+  }
+
+  return generated.events.map((event, index) => ({
+    ...event,
+    id: randomUUID(),
+    order: input.timeline.length + index + 1,
+  }));
 }
 
 export async function compareWorlds(input) {

@@ -2687,3 +2687,128 @@ p {
     text-align: center;
   }
 }
+
+/* Tahap 3: indikator dunia alternatif dihitung secara lokal tanpa panggilan AI tambahan. */
+.world-metrics-panel {
+  margin: 30px 0;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.world-metrics-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.world-metrics-heading h3 {
+  margin: 7px 0 6px;
+  font-size: clamp(18px, 2.4vw, 23px);
+}
+
+.world-metrics-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.world-metrics-badge {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--purple-soft);
+  color: var(--purple-dark);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.world-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.world-metric-card {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface-lavender);
+}
+
+.world-metric-card-top,
+.world-metric-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.world-metric-card-top strong {
+  font-size: 12px;
+}
+
+.world-metric-score {
+  color: var(--purple-dark);
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.world-metric-track {
+  height: 7px;
+  margin: 12px 0 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8e5f5;
+}
+
+.world-metric-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--purple-light), var(--purple-dark));
+  transition: width 220ms ease;
+}
+
+.world-metric-card-bottom {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.metric-delta-positive {
+  color: #24784b;
+}
+.metric-delta-negative {
+  color: #b34242;
+}
+.metric-delta-neutral {
+  color: var(--muted);
+}
+
+.world-metrics-disclaimer {
+  margin: 15px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .world-metrics-panel {
+    padding: 16px;
+  }
+  .world-metrics-heading {
+    flex-direction: column;
+  }
+  .world-metrics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

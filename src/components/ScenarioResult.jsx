@@ -12,6 +12,244 @@ import {
   continueWorldTimeline,
 } from "../services/simulationService";
 
+const WORLD_METRICS = [
+  {
+    key: "economy",
+    label: "Ekonomi",
+    positive: [
+      "ekonomi tumbuh",
+      "pertumbuhan",
+      "investasi",
+      "lapangan kerja",
+      "kemakmuran",
+      "produktivitas",
+      "perdagangan meningkat",
+      "industri berkembang",
+      "pendapatan naik",
+    ],
+    negative: [
+      "resesi",
+      "krisis ekonomi",
+      "pengangguran",
+      "kemiskinan",
+      "inflasi",
+      "utang meningkat",
+      "perdagangan menurun",
+      "industri runtuh",
+      "pendapatan turun",
+    ],
+  },
+  {
+    key: "technology",
+    label: "Teknologi",
+    positive: [
+      "teknologi",
+      "inovasi",
+      "riset",
+      "penelitian",
+      "digitalisasi",
+      "otomatisasi",
+      "penemuan",
+      "infrastruktur digital",
+      "kecerdasan buatan",
+    ],
+    negative: [
+      "kegagalan teknologi",
+      "serangan siber",
+      "kebocoran data",
+      "teknologi tertinggal",
+      "riset terhenti",
+      "infrastruktur rusak",
+    ],
+  },
+  {
+    key: "stability",
+    label: "Stabilitas",
+    positive: [
+      "stabilitas",
+      "perdamaian",
+      "gencatan senjata",
+      "kerja sama",
+      "diplomasi berhasil",
+      "konflik berakhir",
+      "rekonsiliasi",
+      "keamanan meningkat",
+    ],
+    negative: [
+      "perang",
+      "konflik",
+      "kerusuhan",
+      "kudeta",
+      "krisis politik",
+      "ketegangan",
+      "serangan",
+      "instabilitas",
+      "sanksi",
+    ],
+  },
+  {
+    key: "wellbeing",
+    label: "Kesejahteraan",
+    positive: [
+      "kesejahteraan",
+      "layanan kesehatan",
+      "pendidikan meningkat",
+      "akses pendidikan",
+      "kualitas hidup",
+      "layanan publik",
+      "harapan hidup",
+      "kemiskinan menurun",
+    ],
+    negative: [
+      "kelaparan",
+      "wabah",
+      "krisis kesehatan",
+      "layanan publik memburuk",
+      "kesenjangan",
+      "kemiskinan meningkat",
+      "pengungsian",
+      "akses kesehatan menurun",
+    ],
+  },
+  {
+    key: "environment",
+    label: "Lingkungan",
+    positive: [
+      "energi terbarukan",
+      "energi bersih",
+      "konservasi",
+      "reboisasi",
+      "emisi menurun",
+      "polusi menurun",
+      "perlindungan hutan",
+      "keanekaragaman hayati",
+    ],
+    negative: [
+      "deforestasi",
+      "polusi",
+      "emisi meningkat",
+      "perubahan iklim",
+      "bencana ekologis",
+      "pencemaran",
+      "kerusakan hutan",
+      "kepunahan",
+    ],
+  },
+];
+
+function calculateWorldMetrics(worldTimeline = [], contextText = "") {
+  const fullText =
+    `${contextText} ${(worldTimeline || []).map((event) => `${event.title || ""} ${event.description || ""}`).join(" ")}`.toLocaleLowerCase(
+      "id-ID",
+    );
+  return WORLD_METRICS.map((metric) => {
+    const positiveHits = metric.positive.reduce(
+      (total, term) => total + (fullText.includes(term) ? 1 : 0),
+      0,
+    );
+    const negativeHits = metric.negative.reduce(
+      (total, term) => total + (fullText.includes(term) ? 1 : 0),
+      0,
+    );
+    const score = Math.max(
+      10,
+      Math.min(90, 50 + (positiveHits - negativeHits) * 7),
+    );
+    return { ...metric, score, delta: (positiveHits - negativeHits) * 7 };
+  });
+}
+
+function WorldMetricsPanel({ scenario, originalTimeline, activeBranch }) {
+  const originalMetrics = calculateWorldMetrics(
+    originalTimeline,
+    `${scenario.title || ""} ${scenario.premise || ""} ${scenario.prompt || ""}`,
+  );
+  const currentTimeline = activeBranch?.timeline || originalTimeline;
+  const currentContext = `${scenario.title || ""} ${scenario.premise || ""} ${scenario.prompt || ""} ${activeBranch ? `${activeBranch.title || ""} ${activeBranch.summary || ""} ${activeBranch.choice || ""}` : ""}`;
+  const currentMetrics = activeBranch
+    ? calculateWorldMetrics(currentTimeline, currentContext)
+    : originalMetrics;
+
+  return (
+    <section
+      className="world-metrics-panel"
+      aria-label="Statistik dan analisis dunia"
+    >
+      <div className="world-metrics-heading">
+        <div>
+          <span className="section-kicker">STATISTIK DAN ANALISIS DUNIA</span>
+          <h3>
+            {activeBranch
+              ? `Kondisi: ${activeBranch.title}`
+              : "Indikator perkembangan dunia"}
+          </h3>
+          <p>
+            Skor ilustratif yang membantu membaca arah skenario, bukan statistik
+            dunia nyata.
+          </p>
+        </div>
+        <span className="world-metrics-badge">Skala 10–90</span>
+      </div>
+      <div className="world-metrics-grid">
+        {currentMetrics.map((metric) => {
+          const original = originalMetrics.find(
+            (item) => item.key === metric.key,
+          );
+          const difference = metric.score - original.score;
+          return (
+            <article className="world-metric-card" key={metric.key}>
+              <div className="world-metric-card-top">
+                <strong>{metric.label}</strong>
+                <span className="world-metric-score">{metric.score}</span>
+              </div>
+              <div
+                className="world-metric-track"
+                role="progressbar"
+                aria-label={metric.label}
+                aria-valuemin={10}
+                aria-valuemax={90}
+                aria-valuenow={metric.score}
+              >
+                <span
+                  style={{ width: `${((metric.score - 10) / 80) * 100}%` }}
+                />
+              </div>
+              <div className="world-metric-card-bottom">
+                <span>
+                  {metric.score >= 65
+                    ? "Indikasi positif"
+                    : metric.score <= 35
+                      ? "Perlu perhatian"
+                      : "Perkembangan beragam"}
+                </span>
+                {activeBranch && (
+                  <strong
+                    className={
+                      difference > 0
+                        ? "metric-delta-positive"
+                        : difference < 0
+                          ? "metric-delta-negative"
+                          : "metric-delta-neutral"
+                    }
+                  >
+                    {difference > 0 ? "+" : ""}
+                    {difference} vs. dunia awal
+                  </strong>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      <p className="world-metrics-disclaimer">
+        Skor dihitung secara lokal dari kata kunci pada judul, ringkasan, dan
+        timeline. Skor bukan hasil pengukuran empiris atau penilaian AI
+        digunakan sebagai petunjuk visual saja.
+      </p>
+    </section>
+  );
+}
+
 const typeLabels = {
   established: "Fakta dasar",
   plausible: "Kemungkinan masuk akal",
@@ -1067,6 +1305,12 @@ export default function ScenarioResult({ scenario }) {
           )}
         </div>
       )}
+
+      <WorldMetricsPanel
+        scenario={scenario}
+        originalTimeline={timeline}
+        activeBranch={activeBranch}
+      />
 
       <p className="scenario-result-disclaimer">
         {scenario.disclaimer ||

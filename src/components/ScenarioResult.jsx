@@ -243,8 +243,188 @@ function WorldMetricsPanel({ scenario, originalTimeline, activeBranch }) {
       </div>
       <p className="world-metrics-disclaimer">
         Skor dihitung secara lokal dari kata kunci pada judul, ringkasan, dan
-        timeline. Skor bukan hasil pengukuran empiris atau penilaian AI
-        digunakan sebagai petunjuk visual saja.
+        timeline. Skor bukan hasil pengukuran empiris atau penilaian AI; gunakan
+        sebagai petunjuk visual saja.
+      </p>
+    </section>
+  );
+}
+
+function WorldReportPanel({ scenario, timeline, activeBranch }) {
+  const [format, setFormat] = useState("koran");
+  const currentTimeline = Array.isArray(timeline) ? timeline : [];
+  const latestEvent = currentTimeline[currentTimeline.length - 1];
+  const supportingEvents = currentTimeline.slice(0, -1).slice(-2).reverse();
+  const worldTitle =
+    activeBranch?.title || scenario.title || "Dunia Alternatif";
+  const latestYear =
+    latestEvent?.year || scenario.startYear || "Tidak diketahui";
+  const leadTitle =
+    latestEvent?.title || scenario.title || "Perkembangan dunia";
+  const leadDescription =
+    latestEvent?.description ||
+    scenario.premise ||
+    "Belum ada peristiwa pada timeline ini.";
+  const formatDate = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  return (
+    <section
+      className="world-report-panel"
+      aria-label="Koran dan laporan dunia alternatif"
+    >
+      <div className="world-report-controls no-print">
+        <div>
+          <span className="section-kicker">DOKUMEN DUNIA ALTERNATIF</span>
+          <h3>Koran dan laporan dunia</h3>
+          <p>
+            Ubah kejadian dalam timeline menjadi dokumen yang bisa dicetak atau
+            disimpan sebagai PDF.
+          </p>
+        </div>
+        <div className="world-report-actions">
+          <div
+            className="world-report-format-switch"
+            role="group"
+            aria-label="Pilih format dokumen"
+          >
+            <button
+              type="button"
+              className={format === "koran" ? "is-active" : ""}
+              onClick={() => setFormat("koran")}
+              aria-pressed={format === "koran"}
+            >
+              Koran
+            </button>
+            <button
+              type="button"
+              className={format === "laporan" ? "is-active" : ""}
+              onClick={() => setFormat("laporan")}
+              aria-pressed={format === "laporan"}
+            >
+              Laporan
+            </button>
+          </div>
+          <button
+            type="button"
+            className="world-report-print-button"
+            onClick={() => window.print()}
+          >
+            <span aria-hidden="true">↗</span> Cetak / Simpan PDF
+          </button>
+        </div>
+      </div>
+
+      <article
+        className={`world-report-document ${format === "koran" ? "is-newspaper" : "is-report"}`}
+      >
+        <header className="world-report-masthead">
+          <div className="world-report-brand">
+            JIKAI <span>· DOKUMEN SIMULASI</span>
+          </div>
+          <div className="world-report-issue">
+            <span>Edisi dunia alternatif</span>
+            <strong>{formatDate}</strong>
+          </div>
+        </header>
+        {format === "koran" ? (
+          <>
+            <div className="world-report-rule" />
+            <p className="world-report-eyebrow">
+              LAPORAN KHUSUS · TAHUN {latestYear}
+            </p>
+            <h2 className="world-report-headline">{leadTitle}</h2>
+            <p className="world-report-deck">
+              Perkembangan terbaru dari <strong>{worldTitle}</strong> membentuk
+              arah baru bagi dunia dalam skenario ini.
+            </p>
+            <div className="world-report-byline">
+              BULETIN SIMULASI JIKAI <span>•</span> {worldTitle}
+            </div>
+            <div className="world-report-lead">{leadDescription}</div>
+            {activeBranch && (
+              <div className="world-report-choice">
+                <strong>Titik perubahan:</strong>{" "}
+                {activeBranch.choice || "Keputusan alternatif"}
+              </div>
+            )}
+            {supportingEvents.length > 0 && (
+              <div className="world-report-related">
+                <h3>Peristiwa yang membawa dunia ke sini</h3>
+                {supportingEvents.map((event, index) => (
+                  <section
+                    className="world-report-related-item"
+                    key={event.id || `${event.year}-${index}`}
+                  >
+                    <span>Tahun {event.year}</span>
+                    <h4>{event.title}</h4>
+                    <p>{event.description}</p>
+                  </section>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="world-report-eyebrow">
+              LAPORAN PERKEMBANGAN · TAHUN {latestYear}
+            </p>
+            <h2 className="world-report-headline">
+              Ringkasan kondisi: {worldTitle}
+            </h2>
+            <p className="world-report-deck">
+              Laporan ini merangkum titik perubahan, kondisi terbaru, dan
+              rangkaian peristiwa dalam simulasi.
+            </p>
+            <section className="world-report-report-section">
+              <h3>Ringkasan terbaru</h3>
+              <h4>{leadTitle}</h4>
+              <p>{leadDescription}</p>
+            </section>
+            <section className="world-report-report-section">
+              <h3>Latar skenario</h3>
+              <p>
+                {scenario.premise ||
+                  scenario.prompt ||
+                  "Tidak ada ringkasan awal yang tersedia."}
+              </p>
+              {activeBranch && (
+                <p>
+                  <strong>Keputusan alternatif:</strong> {activeBranch.choice}
+                </p>
+              )}
+            </section>
+            <section className="world-report-report-section">
+              <h3>Riwayat peristiwa</h3>
+              {currentTimeline.map((event, index) => (
+                <div
+                  className="world-report-timeline-row"
+                  key={event.id || `${event.year}-${index}`}
+                >
+                  <span>{event.year}</span>
+                  <div>
+                    <strong>{event.title}</strong>
+                    <p>{event.description}</p>
+                  </div>
+                </div>
+              ))}
+            </section>
+          </>
+        )}
+        <footer className="world-report-footer">
+          <strong>JikAI</strong>
+          <span>
+            Dokumen dari simulasi hipotetis. Bukan berita nyata, fakta
+            terverifikasi, atau prediksi pasti.
+          </span>
+        </footer>
+      </article>
+      <p className="world-report-note no-print">
+        Dokumen dibuat secara lokal dari data simulasi yang sudah tersedia.
+        Fitur ini tidak memanggil AI tambahan.
       </p>
     </section>
   );
@@ -1309,6 +1489,12 @@ export default function ScenarioResult({ scenario }) {
       <WorldMetricsPanel
         scenario={scenario}
         originalTimeline={timeline}
+        activeBranch={activeBranch}
+      />
+
+      <WorldReportPanel
+        scenario={scenario}
+        timeline={activeBranch?.timeline || timeline}
         activeBranch={activeBranch}
       />
 

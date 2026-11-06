@@ -2812,3 +2812,333 @@ p {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Tahap 4: koran dan laporan dunia alternatif, dirakit lokal dari timeline. */
+.world-report-panel {
+  margin: 30px 0;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.world-report-controls {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.world-report-controls h3 {
+  margin: 7px 0 6px;
+  font-size: clamp(18px, 2.4vw, 23px);
+}
+
+.world-report-controls p,
+.world-report-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.world-report-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  flex: 0 0 auto;
+}
+
+.world-report-format-switch {
+  display: flex;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-lavender);
+}
+
+.world-report-format-switch button {
+  flex: 1;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.world-report-format-switch button.is-active {
+  color: var(--purple-dark);
+  background: var(--surface);
+  box-shadow: 0 1px 4px rgb(32 24 76 / 9%);
+}
+
+.world-report-print-button {
+  border: 1px solid var(--purple);
+  border-radius: 10px;
+  padding: 10px 13px;
+  color: white;
+  background: var(--purple);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.world-report-print-button:hover {
+  background: var(--purple-dark);
+}
+
+.world-report-document {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 42px);
+  border: 1px solid #e8e5de;
+  background: #fffefa;
+  color: #242424;
+  box-shadow: 0 8px 28px rgb(30 25 20 / 5%);
+}
+
+.world-report-masthead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 15px;
+}
+
+.world-report-brand {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.world-report-brand span,
+.world-report-issue span {
+  display: block;
+  color: #77736d;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.world-report-issue {
+  text-align: right;
+  font-size: 11px;
+}
+.world-report-issue strong {
+  display: block;
+  margin-top: 4px;
+}
+.world-report-rule {
+  height: 4px;
+  background: #242424;
+}
+.world-report-eyebrow {
+  margin: 23px 0 9px;
+  color: #6a55c9;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+}
+.world-report-headline {
+  max-width: 760px;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(28px, 5vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+.world-report-deck {
+  max-width: 720px;
+  margin: 14px 0;
+  color: #595650;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+.world-report-byline {
+  padding: 12px 0;
+  border-top: 1px solid #d9d4cb;
+  border-bottom: 1px solid #d9d4cb;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.world-report-byline span {
+  padding: 0 7px;
+}
+.world-report-lead {
+  max-width: 760px;
+  margin-top: 20px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.85;
+  white-space: pre-line;
+}
+.world-report-choice {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-left: 3px solid #6a55c9;
+  background: #f4f1ff;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.world-report-related {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 2px solid #242424;
+}
+.world-report-related > h3 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+}
+.world-report-related-item {
+  padding-top: 12px;
+  border-top: 1px solid #d9d4cb;
+}
+.world-report-related-item > span {
+  color: #6a55c9;
+  font-size: 10px;
+  font-weight: 800;
+}
+.world-report-related-item h4 {
+  margin: 6px 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+}
+.world-report-related-item p,
+.world-report-report-section p,
+.world-report-timeline-row p {
+  margin: 0;
+  color: #595650;
+  font-size: 12px;
+  line-height: 1.75;
+  white-space: pre-line;
+}
+.world-report-report-section {
+  margin-top: 24px;
+  padding-top: 17px;
+  border-top: 1px solid #d9d4cb;
+}
+.world-report-report-section h3 {
+  margin: 0 0 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+}
+.world-report-report-section h4 {
+  margin: 0 0 7px;
+  font-size: 14px;
+}
+.world-report-timeline-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid #e8e5de;
+}
+.world-report-timeline-row > span {
+  color: #6a55c9;
+  font-size: 11px;
+  font-weight: 850;
+}
+.world-report-timeline-row strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+.world-report-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 30px;
+  padding-top: 13px;
+  border-top: 2px solid #242424;
+  font-size: 10px;
+}
+.world-report-footer span {
+  max-width: 480px;
+  color: #77736d;
+  text-align: right;
+  line-height: 1.6;
+}
+.world-report-note {
+  margin-top: 12px;
+  font-size: 10px;
+}
+
+@media (max-width: 640px) {
+  .world-report-panel {
+    padding: 16px;
+  }
+  .world-report-controls {
+    flex-direction: column;
+  }
+  .world-report-actions {
+    width: 100%;
+  }
+  .world-report-related {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .world-report-related > h3 {
+    grid-column: auto;
+  }
+  .world-report-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .world-report-footer span {
+    text-align: left;
+  }
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+    size: A4;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+  .world-report-panel,
+  .world-report-panel * {
+    visibility: visible !important;
+  }
+  .world-report-panel {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: white !important;
+  }
+  .world-report-document {
+    max-width: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .world-report-related-item,
+  .world-report-report-section,
+  .world-report-timeline-row {
+    break-inside: avoid;
+  }
+}

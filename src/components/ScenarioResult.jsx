@@ -250,6 +250,410 @@ function WorldMetricsPanel({ scenario, originalTimeline, activeBranch }) {
   );
 }
 
+const MAP_LOCATIONS = [
+  {
+    name: "Indonesia",
+    aliases: ["indonesia", "nusantara", "kepulauan indonesia"],
+    x: 735,
+    y: 315,
+    region: "Asia Tenggara",
+  },
+  {
+    name: "Jakarta",
+    aliases: ["jakarta", "ibu kota indonesia"],
+    x: 722,
+    y: 323,
+    region: "Asia Tenggara",
+  },
+  {
+    name: "Asia Tenggara",
+    aliases: ["asia tenggara", "asean"],
+    x: 750,
+    y: 300,
+    region: "Asia",
+  },
+  {
+    name: "Tiongkok",
+    aliases: ["tiongkok", "china", "cina", "beijing", "shanghai"],
+    x: 760,
+    y: 225,
+    region: "Asia Timur",
+  },
+  {
+    name: "Jepang",
+    aliases: ["jepang", "tokyo", "okinawa"],
+    x: 830,
+    y: 250,
+    region: "Asia Timur",
+  },
+  {
+    name: "India",
+    aliases: ["india", "new delhi", "mumbai"],
+    x: 665,
+    y: 270,
+    region: "Asia Selatan",
+  },
+  {
+    name: "Rusia",
+    aliases: ["rusia", "moskow", "moscow", "siberia"],
+    x: 700,
+    y: 165,
+    region: "Eurasia",
+  },
+  {
+    name: "Timur Tengah",
+    aliases: [
+      "timur tengah",
+      "iran",
+      "irak",
+      "arab saudi",
+      "palestina",
+      "teheran",
+      "riyadh",
+    ],
+    x: 570,
+    y: 280,
+    region: "Asia Barat",
+  },
+  {
+    name: "Eropa",
+    aliases: ["eropa", "uni eropa", "europe"],
+    x: 490,
+    y: 185,
+    region: "Eropa",
+  },
+  {
+    name: "Inggris",
+    aliases: ["inggris", "britania", "london", "united kingdom"],
+    x: 460,
+    y: 175,
+    region: "Eropa",
+  },
+  {
+    name: "Prancis",
+    aliases: ["prancis", "paris"],
+    x: 480,
+    y: 195,
+    region: "Eropa",
+  },
+  {
+    name: "Jerman",
+    aliases: ["jerman", "berlin"],
+    x: 505,
+    y: 185,
+    region: "Eropa",
+  },
+  {
+    name: "Afrika",
+    aliases: ["afrika", "africa", "sahara", "nairobi", "lagos"],
+    x: 520,
+    y: 340,
+    region: "Afrika",
+  },
+  {
+    name: "Amerika Serikat",
+    aliases: [
+      "amerika serikat",
+      "amerika",
+      "as",
+      "washington",
+      "new york",
+      "los angeles",
+      "usa",
+      "united states",
+    ],
+    x: 240,
+    y: 220,
+    region: "Amerika Utara",
+  },
+  {
+    name: "Kanada",
+    aliases: ["kanada", "canada", "ottawa", "toronto"],
+    x: 245,
+    y: 150,
+    region: "Amerika Utara",
+  },
+  {
+    name: "Meksiko",
+    aliases: ["meksiko", "mexico"],
+    x: 280,
+    y: 280,
+    region: "Amerika Utara",
+  },
+  {
+    name: "Brasil",
+    aliases: ["brasil", "brazil", "brasilia", "sao paulo"],
+    x: 340,
+    y: 390,
+    region: "Amerika Selatan",
+  },
+  {
+    name: "Australia",
+    aliases: ["australia", "sydney", "canberra", "melbourne"],
+    x: 835,
+    y: 410,
+    region: "Oseania",
+  },
+  {
+    name: "Dunia",
+    aliases: [
+      "seluruh dunia",
+      "di seluruh dunia",
+      "global",
+      "internasional",
+      "dunia internasional",
+    ],
+    x: 500,
+    y: 85,
+    region: "Global",
+  },
+];
+
+function WorldEventMap({ scenario, timeline, activeBranch }) {
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const events = Array.isArray(timeline) ? timeline : [];
+  const locationEvents = MAP_LOCATIONS.map((location) => {
+    const matchedEvents = events.filter((event) => {
+      const text =
+        `${event.title || ""} ${event.description || ""}`.toLocaleLowerCase(
+          "id-ID",
+        );
+      return location.aliases.some((alias) => {
+        const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return new RegExp(
+          `(^|[^\\p{L}\\p{N}])${escaped}([^\\p{L}\\p{N}]|$)`,
+          "iu",
+        ).test(text);
+      });
+    });
+    return { ...location, events: matchedEvents };
+  }).filter((location) => location.events.length > 0);
+  const locationNames = locationEvents
+    .map((location) => location.name)
+    .join("|");
+  const selected =
+    locationEvents.find((location) => location.name === selectedLocation) ||
+    null;
+  const locatedEventIds = new Set(
+    locationEvents.flatMap((location) =>
+      location.events.map(
+        (event) => event.id || `${event.year}-${event.title}`,
+      ),
+    ),
+  );
+  const unlocatedEvents = events.filter(
+    (event) => !locatedEventIds.has(event.id || `${event.year}-${event.title}`),
+  );
+
+  useEffect(() => {
+    if (
+      selectedLocation &&
+      !locationNames.split("|").includes(selectedLocation)
+    )
+      setSelectedLocation(null);
+  }, [selectedLocation, locationNames]);
+
+  return (
+    <section className="world-event-map" aria-label="Peta dunia alternatif">
+      <div className="world-event-map-heading">
+        <div>
+          <span className="section-kicker">PETA DUNIA ALTERNATIF</span>
+          <h3>
+            {activeBranch
+              ? `Peta peristiwa: ${activeBranch.title}`
+              : `Peta peristiwa: ${scenario.title || "Dunia alternatif"}`}
+          </h3>
+          <p>
+            Jelajahi lokasi yang disebut secara eksplisit dalam judul atau
+            deskripsi peristiwa timeline.
+          </p>
+        </div>
+        <span className="world-event-map-count">
+          {locationEvents.length} lokasi terdeteksi
+        </span>
+      </div>
+      <div className="world-event-map-layout">
+        <div className="world-event-map-canvas">
+          <svg
+            viewBox="0 0 1000 520"
+            role="img"
+            aria-label="Peta skematis dunia dengan penanda lokasi peristiwa"
+          >
+            <defs>
+              <pattern
+                id="world-map-grid"
+                width="50"
+                height="50"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M 50 0 L 0 0 0 50"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeOpacity=".08"
+                  strokeWidth="1"
+                />
+              </pattern>
+            </defs>
+            <rect
+              width="1000"
+              height="520"
+              rx="18"
+              fill="url(#world-map-grid)"
+            />
+            <g
+              className="world-map-land"
+              fill="currentColor"
+              fillOpacity=".12"
+              stroke="currentColor"
+              strokeOpacity=".18"
+              strokeWidth="2"
+            >
+              <path d="M92 110 L145 73 220 70 260 100 310 116 330 154 302 182 280 220 245 238 224 277 196 270 176 230 145 208 125 170 92 150Z" />
+              <path d="M280 282 L321 292 354 330 363 372 344 424 325 463 302 430 292 387 270 351Z" />
+              <path d="M430 116 L470 95 520 105 550 130 538 155 505 160 489 184 460 177 444 150Z" />
+              <path d="M470 190 L520 184 560 215 573 260 554 314 535 366 510 390 485 350 475 305 450 268 455 225Z" />
+              <path d="M530 108 L600 77 695 83 755 105 820 126 874 160 900 196 865 225 820 217 790 244 755 232 725 206 675 215 638 192 590 178 555 150Z" />
+              <path d="M704 258 L755 268 786 295 770 326 740 334 714 310 690 286Z" />
+              <path d="M785 365 L835 348 885 367 906 400 880 427 830 430 798 405Z" />
+              <path d="M390 70 L430 56 456 72 440 92 408 91Z" />
+            </g>
+            <text
+              x="500"
+              y="495"
+              textAnchor="middle"
+              className="world-map-caption"
+            >
+              PETA SKEMATIS · BUKAN BATAS GEOGRAFIS PRESISI
+            </text>
+            {locationEvents.map((location) => (
+              <g
+                key={location.name}
+                className={`world-map-marker${selectedLocation === location.name ? " is-selected" : ""}`}
+                role="button"
+                tabIndex="0"
+                aria-label={`Lihat peristiwa di ${location.name}`}
+                onClick={() =>
+                  setSelectedLocation(
+                    selectedLocation === location.name ? null : location.name,
+                  )
+                }
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedLocation(
+                      selectedLocation === location.name ? null : location.name,
+                    );
+                  }
+                }}
+              >
+                <circle
+                  cx={location.x}
+                  cy={location.y}
+                  r={selectedLocation === location.name ? 16 : 12}
+                />
+                <circle
+                  cx={location.x}
+                  cy={location.y}
+                  r="4"
+                  className="world-map-marker-core"
+                />
+                <text x={location.x} y={location.y - 20} textAnchor="middle">
+                  {location.name}
+                </text>
+              </g>
+            ))}
+          </svg>
+          <div className="world-map-legend">
+            <span>
+              <i /> Lokasi disebut di timeline
+            </span>
+            <span>Tekan penanda untuk melihat peristiwa</span>
+          </div>
+        </div>
+        <aside className="world-event-map-details">
+          {selected ? (
+            <>
+              <div className="world-map-detail-kicker">{selected.region}</div>
+              <h4>{selected.name}</h4>
+              <p className="world-map-detail-count">
+                {selected.events.length} peristiwa terkait
+              </p>
+              {selected.events.map((event, index) => (
+                <article
+                  className="world-map-event"
+                  key={event.id || `${event.year}-${index}`}
+                >
+                  <span>Tahun {event.year || "—"}</span>
+                  <strong>{event.title || "Peristiwa tanpa judul"}</strong>
+                  <p>{event.description || "Tidak ada deskripsi."}</p>
+                </article>
+              ))}
+              <button
+                type="button"
+                className="world-map-clear"
+                onClick={() => setSelectedLocation(null)}
+              >
+                Tampilkan ringkasan
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="world-map-detail-kicker">RINGKASAN PETA</div>
+              <h4>Peristiwa berdasarkan lokasi</h4>
+              <p>
+                {locationEvents.length
+                  ? `Ada ${locationEvents.length} lokasi yang cocok dengan penyebutan di timeline ini.`
+                  : "Belum ada nama lokasi yang dikenali dalam timeline ini."}
+              </p>
+              {locationEvents.slice(0, 7).map((location) => (
+                <button
+                  type="button"
+                  className="world-map-location-row"
+                  key={location.name}
+                  onClick={() => setSelectedLocation(location.name)}
+                >
+                  <span>
+                    <strong>{location.name}</strong>
+                    <small>{location.region}</small>
+                  </span>
+                  <b>{location.events.length}</b>
+                </button>
+              ))}
+              {locationEvents.length > 7 && (
+                <p className="world-map-more">
+                  Pilih lokasi pada peta untuk membuka detail lainnya.
+                </p>
+              )}
+            </>
+          )}
+        </aside>
+      </div>
+      {unlocatedEvents.length > 0 && (
+        <details className="world-map-unlocated">
+          <summary>
+            {unlocatedEvents.length} peristiwa tanpa lokasi yang dikenali
+          </summary>
+          <div>
+            {unlocatedEvents.map((event, index) => (
+              <article key={event.id || `${event.year}-${index}`}>
+                <span>Tahun {event.year || "—"}</span>
+                <strong>{event.title || "Peristiwa tanpa judul"}</strong>
+                <p>{event.description || "Tidak ada deskripsi."}</p>
+              </article>
+            ))}
+          </div>
+        </details>
+      )}
+      <p className="world-map-disclaimer">
+        Peta ini bersifat skematis. Lokasi ditandai berdasarkan pencocokan kata
+        kunci secara lokal, bukan hasil ekstraksi AI atau verifikasi geografis.
+        Jika lokasi tidak disebutkan dengan jelas, JikAI tidak menebaknya.
+      </p>
+    </section>
+  );
+}
+
 function WorldReportPanel({ scenario, timeline, activeBranch }) {
   const [format, setFormat] = useState("koran");
   const currentTimeline = Array.isArray(timeline) ? timeline : [];
@@ -1489,6 +1893,12 @@ export default function ScenarioResult({ scenario }) {
       <WorldMetricsPanel
         scenario={scenario}
         originalTimeline={timeline}
+        activeBranch={activeBranch}
+      />
+
+      <WorldEventMap
+        scenario={scenario}
+        timeline={activeBranch?.timeline || timeline}
         activeBranch={activeBranch}
       />
 
